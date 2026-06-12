@@ -1,5 +1,4 @@
 <div align="center">
-  <img src="https://img.shields.io/badge/STATUS-AWARD%20WINNING-22d3ee?style=for-the-badge&labelColor=060a10" alt="Award Winning"/>
   <br/>
   <img src="https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js" alt="Next.js"/>
   <img src="https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript" alt="TypeScript"/>
