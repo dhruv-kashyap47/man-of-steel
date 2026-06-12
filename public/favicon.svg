@@ -1,0 +1,26 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#1a1a2e"/>
+      <stop offset="100%" stop-color="#16213e"/>
+    </linearGradient>
+    <linearGradient id="steel" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="#e8e8e8"/>
+      <stop offset="50%" stop-color="#a0a8b0"/>
+      <stop offset="100%" stop-color="#606870"/>
+    </linearGradient>
+    <linearGradient id="glow" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0%" stop-color="#ff4444"/>
+      <stop offset="100%" stop-color="#cc0000"/>
+    </linearGradient>
+  </defs>
+  <rect width="100" height="100" rx="20" fill="url(#bg)"/>
+  <!-- Steel hexagonal shape -->
+  <path d="M50 8 L82 26 L82 62 L50 80 L18 62 L18 26 Z" fill="none" stroke="url(#steel)" stroke-width="3" stroke-linejoin="round"/>
+  <!-- Inner hexagon -->
+  <path d="M50 20 L72 32 L72 56 L50 68 L28 56 L28 32 Z" fill="none" stroke="url(#steel)" stroke-width="1.5" stroke-linejoin="round" opacity="0.4"/>
+  <!-- S letterform -->
+  <path d="M58 35 C64 35 66 38 66 41 C66 45 62 47 56 48 C52 49 44 49 44 49 C44 49 44 55 44 55 C44 55 52 55 56 54 C62 53 66 55 66 59 C66 63 62 65 56 65 L42 65" fill="none" stroke="url(#steel)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+  <!-- Accent dot (hot steel) -->
+  <circle cx="50" cy="90" r="4" fill="url(#glow)" opacity="0.8"/>
+</svg>
