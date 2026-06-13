@@ -23,7 +23,7 @@ export function ReportsCenter() {
     });
   }, []);
 
-  async function generateReport(type: "incident" | "maintenance" | "executive_summary") {
+  async function generateReport(type: "incident" | "maintenance" | "executive_summary" | "priority" | "feedback_learning" | "intelligence") {
     setGenerating(type);
     try {
       const res = await fetch("/api/reports", {
@@ -64,6 +64,24 @@ export function ReportsCenter() {
       description: "Plant-wide health overview, critical assets, and AI insights for leadership.",
       color: "warning" as const,
     },
+    {
+      type: "priority" as const,
+      title: "Priority Report",
+      description: "Ranked assets, production bottlenecks, procurement risks, and spare shortages.",
+      color: "destructive" as const,
+    },
+    {
+      type: "feedback_learning" as const,
+      title: "Feedback Learning Report",
+      description: "Model accuracy, recurring failures, root causes, and learning progress.",
+      color: "warning" as const,
+    },
+    {
+      type: "intelligence" as const,
+      title: "Intelligence Report",
+      description: "Early warnings, risk escalations, bottlenecks, and plant health ranking.",
+      color: "cyan" as const,
+    },
   ];
 
   return (
@@ -90,7 +108,7 @@ export function ReportsCenter() {
         </div>
 
         {/* Generate cards */}
-        <div className="grid gap-4 md:grid-cols-3">
+        <div className="grid gap-4 md:grid-cols-3 lg:grid-cols-3">
           {reportTypes.map((rt) => (
             <Card key={rt.type} className="hud-panel-accent">
               <CardHeader>

@@ -15,6 +15,7 @@ import {
   Search,
   Terminal,
   AlertTriangle,
+  ListChecks,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { APP_CONFIG } from "@/lib/config";
@@ -27,6 +28,8 @@ const ICON_MAP: Record<string, React.ElementType> = {
   Bot,
   FileText,
   BookOpen,
+  ListChecks,
+  Activity,
 };
 
 export function AppShell({ children }: { children: React.ReactNode }) {

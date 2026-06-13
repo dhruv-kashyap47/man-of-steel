@@ -4,6 +4,9 @@ import {
   buildIncidentReport,
   buildMaintenanceReport,
   buildExecutiveSummary,
+  buildPriorityReport,
+  buildFeedbackLearningReport,
+  buildMaintenanceIntelligenceReport,
 } from "@/lib/reports/builder";
 import { checkRateLimit } from "@/lib/rate-limiter";
 
@@ -21,7 +24,7 @@ export async function POST(req: Request) {
 
     const body = await req.json();
     const { type, assetId } = body as {
-      type: "incident" | "maintenance" | "executive_summary";
+      type: "incident" | "maintenance" | "executive_summary" | "priority" | "feedback_learning" | "intelligence";
       assetId?: string;
     };
 
@@ -37,6 +40,15 @@ export async function POST(req: Request) {
         break;
       case "executive_summary":
         reportData = buildExecutiveSummary();
+        break;
+      case "priority":
+        reportData = buildPriorityReport();
+        break;
+      case "feedback_learning":
+        reportData = buildFeedbackLearningReport();
+        break;
+      case "intelligence":
+        reportData = buildMaintenanceIntelligenceReport();
         break;
       default:
         return NextResponse.json({ error: "Invalid report type" }, { status: 400 });

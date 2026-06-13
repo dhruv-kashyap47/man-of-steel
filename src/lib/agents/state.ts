@@ -1,6 +1,6 @@
 import { Annotation } from "@langchain/langgraph";
-import type { Citation, RiskLevel } from "@/types/database";
-import type { PredictionResult } from "@/types";
+import type { Citation, RiskLevel, PriorityLevel } from "@/types/database";
+import type { PredictionResult, PriorityData } from "@/types";
 
 export const AgentState = Annotation.Root({
   query: Annotation<string>,
@@ -17,6 +17,23 @@ export const AgentState = Annotation.Root({
   executiveSummary: Annotation<string>,
   response: Annotation<string>,
   agentsInvoked: Annotation<string[]>,
+  priority: Annotation<PriorityData | null>,
+  experiences: Annotation<Array<{
+    incidentType: string;
+    rootCause: string;
+    fixApplied: string;
+    fixEffective: boolean;
+    confidence: number;
+  }>>,
+  confidence: Annotation<number>,
+  sensorInterpretation: Annotation<string>,
+  historicalCases: Annotation<string[]>,
+  sparePartsStrategy: Annotation<string>,
+  procurementRisks: Annotation<string[]>,
+  sourceCitations: Annotation<string[]>,
+  immediateActions: Annotation<string[]>,
+  longTermActions: Annotation<string[]>,
+  consequencesOfInaction: Annotation<string>,
 });
 
 export type AgentStateType = typeof AgentState.State;

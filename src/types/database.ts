@@ -3,7 +3,14 @@ export type MachineType =
   | "blast_furnace_fan"
   | "hydraulic_pump"
   | "conveyor"
-  | "overhead_crane";
+  | "overhead_crane"
+  | "gearbox"
+  | "compressor"
+  | "cooling_water_pump"
+  | "id_fan"
+  | "fd_fan"
+  | "bearing"
+  | "drive_system";
 
 export type AssetStatus =
   | "operational"
@@ -26,13 +33,27 @@ export type DocumentType =
   | "manual"
   | "sop"
   | "incident_report"
-  | "maintenance_log";
+  | "maintenance_log"
+  | "failure_analysis"
+  | "shift_notes"
+  | "inspection_report"
+  | "work_order";
 
-export type ReportType = "incident" | "maintenance" | "executive_summary";
+export type ReportType =
+  | "incident"
+  | "maintenance"
+  | "executive_summary"
+  | "priority"
+  | "feedback_learning"
+  | "intelligence";
 
 export type RiskLevel = "low" | "medium" | "high" | "critical";
 
 export type InsightType = "prediction" | "anomaly" | "recommendation" | "trend";
+
+export type PriorityLevel = "p1_critical" | "p2_high" | "p3_medium" | "p4_low";
+
+export type EngineerFeedback = "correct" | "partially_correct" | "incorrect";
 
 export interface Plant {
   id: string;
@@ -238,6 +259,126 @@ export interface AlertWithAsset extends Alert {
   asset?: Asset;
 }
 
+export interface MaintenancePriority {
+  id: string;
+  asset_id: string;
+  priority_score: number;
+  priority_level: PriorityLevel;
+  failure_risk: number;
+  remaining_useful_life_hours: number;
+  process_criticality: number;
+  production_impact: number;
+  spare_availability: number;
+  procurement_lead_time_days: number;
+  maintenance_window: string;
+  procurement_recommendation: string;
+  business_impact_summary: string;
+  calculated_at: string;
+  created_at: string;
+}
+
+export interface MaintenanceFeedback {
+  id: string;
+  asset_id: string;
+  query: string;
+  diagnosis: string;
+  prediction: Record<string, unknown>;
+  recommendation: string;
+  actual_outcome: string;
+  root_cause: string;
+  resolution: string;
+  engineer_feedback: EngineerFeedback;
+  resolution_notes: string;
+  timestamp: string;
+  created_at: string;
+}
+
+export interface ExperienceNode {
+  id: string;
+  asset_id: string;
+  machine_type: MachineType | null;
+  incident_type: string;
+  symptoms: string[];
+  root_cause: string;
+  fix_applied: string;
+  fix_effective: boolean;
+  parts_used: string[];
+  downtime_hours: number;
+  cost_usd: number;
+  engineer_notes: string;
+  recurring: boolean;
+  confidence_adjustment: number;
+  created_at: string;
+}
+
+export interface EarlyWarning {
+  id: string;
+  asset_id: string;
+  warning_type: string;
+  severity: AlertSeverity;
+  description: string;
+  sensor_metric: string;
+  current_value: number;
+  threshold: number;
+  trend_direction: "increasing" | "decreasing" | "steady";
+  days_to_threshold: number;
+  confidence: number;
+  detected_at: string;
+}
+
+export interface PlantBottleneck {
+  id: string;
+  asset_id: string;
+  bottleneck_type: string;
+  severity: AlertSeverity;
+  description: string;
+  production_impact_description: string;
+  estimated_downtime_hours: number;
+  estimated_cost_usd: number;
+  dependent_assets: string[];
+  detected_at: string;
+}
+
+export interface SpareShortage {
+  id: string;
+  part_name: string;
+  asset_id: string;
+  current_stock: number;
+  reorder_point: number;
+  lead_time_days: number;
+  priority: PriorityLevel;
+  shortage_date: string;
+  impact_description: string;
+}
+
+export interface ExplainedPrediction extends FailurePrediction {
+  evidence: string[];
+  related_incidents: string[];
+  related_documents: string[];
+  sensor_justification: Record<string, string>;
+  historical_justification: string;
+  reasoning_summary: string;
+}
+
+export interface CopilotResponse {
+  executiveSummary: string;
+  faultDiagnosis: string;
+  rootCauseAnalysis: string;
+  supportingEvidence: string[];
+  sensorInterpretation: string;
+  similarHistoricalCases: string[];
+  riskAssessment: string;
+  remainingUsefulLife: string;
+  maintenancePriority: string;
+  immediateActions: string[];
+  longTermActions: string[];
+  sparePartsStrategy: string;
+  procurementRisks: string[];
+  confidenceScore: number;
+  sourceCitations: string[];
+  citations: Citation[];
+}
+
 export interface Database {
   public: {
     Tables: {
@@ -293,6 +434,36 @@ export interface Database {
         Row: AgentRun;
         Insert: Partial<AgentRun>;
         Update: Partial<AgentRun>;
+      };
+      maintenance_priorities: {
+        Row: MaintenancePriority;
+        Insert: Partial<MaintenancePriority>;
+        Update: Partial<MaintenancePriority>;
+      };
+      maintenance_feedback: {
+        Row: MaintenanceFeedback;
+        Insert: Partial<MaintenanceFeedback>;
+        Update: Partial<MaintenanceFeedback>;
+      };
+      experience_nodes: {
+        Row: ExperienceNode;
+        Insert: Partial<ExperienceNode>;
+        Update: Partial<ExperienceNode>;
+      };
+      early_warnings: {
+        Row: EarlyWarning;
+        Insert: Partial<EarlyWarning>;
+        Update: Partial<EarlyWarning>;
+      };
+      plant_bottlenecks: {
+        Row: PlantBottleneck;
+        Insert: Partial<PlantBottleneck>;
+        Update: Partial<PlantBottleneck>;
+      };
+      spare_shortages: {
+        Row: SpareShortage;
+        Insert: Partial<SpareShortage>;
+        Update: Partial<SpareShortage>;
       };
     };
     Functions: {

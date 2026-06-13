@@ -66,6 +66,15 @@ export async function POST(req: Request) {
         prediction: result.prediction,
         agentsInvoked: result.agentsInvoked,
         durationMs: duration,
+        confidence: result.confidence,
+        priority: result.priority,
+        experiences: result.experiences,
+        immediateActions: result.immediateActions,
+        longTermActions: result.longTermActions,
+        sparePartsStrategy: result.sparePartsStrategy,
+        procurementRisks: result.procurementRisks,
+        sourceCitations: result.sourceCitations,
+        historicalCases: result.historicalCases,
       },
     });
 
@@ -82,6 +91,15 @@ export async function POST(req: Request) {
         citations: result.citations,
         agentsInvoked: result.agentsInvoked,
         durationMs: duration,
+        confidence: result.confidence,
+        priority: result.priority,
+        experiences: result.experiences,
+        immediateActions: result.immediateActions,
+        longTermActions: result.longTermActions,
+        sparePartsStrategy: result.sparePartsStrategy,
+        procurementRisks: result.procurementRisks,
+        sourceCitations: result.sourceCitations,
+        historicalCases: result.historicalCases,
       },
     });
   } catch (err) {

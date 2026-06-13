@@ -1,5 +1,5 @@
 import { dataStore } from "@/lib/data/store";
-import type { ReportType } from "@/types/database";
+import type { ReportType, PriorityLevel } from "@/types/database";
 
 export function buildIncidentReport(assetId: string) {
   const asset = dataStore.getAsset(assetId);
@@ -188,6 +188,231 @@ export function buildExecutiveSummary() {
       ],
     },
     generated_by: "MAN OF STEEL Agent System",
+    pdf_path: null,
+  };
+}
+
+export function buildPriorityReport() {
+  const priorities = dataStore.getPriorities();
+  const assets = dataStore.getAssets();
+
+  const p1Count = priorities.filter((p) => p.priority_level === "p1_critical").length;
+  const p2Count = priorities.filter((p) => p.priority_level === "p2_high").length;
+  const p3Count = priorities.filter((p) => p.priority_level === "p3_medium").length;
+  const p4Count = priorities.filter((p) => p.priority_level === "p4_low").length;
+
+  const avgProcurementLead = Math.round(
+    priorities.reduce((s, p) => s + p.procurement_lead_time_days, 0) / priorities.length
+  );
+
+  const bottlenecks = dataStore.getBottlenecks();
+  const shortages = dataStore.getSpareShortages();
+
+  return {
+    report_type: "priority" as ReportType,
+    title: `Maintenance Priority Report — ${assets.length} Assets`,
+    asset_id: null,
+    plant_id: assets[0]?.plant_id ?? null,
+    content: {
+      executiveSummary: `Priority assessment for ${assets.length} assets. ${p1Count} P1-Critical, ${p2Count} P2-High, ${p3Count} P3-Medium, ${p4Count} P4-Low. ${bottlenecks.length} production bottlenecks identified. ${shortages.length} spare shortages requiring attention.`,
+      sections: [
+        {
+          title: "Priority Distribution",
+          body: `P1 Critical: ${p1Count} assets requiring immediate action within 24 hours.\nP2 High: ${p2Count} assets requiring intervention within 7 days.\nP3 Medium: ${p3Count} assets — schedule during next planned shutdown.\nP4 Low: ${p4Count} assets — continue routine monitoring.`,
+        },
+        {
+          title: "Top 5 Critical Assets",
+          body: priorities
+            .filter((p) => p.priority_level === "p1_critical" || p.priority_level === "p2_high")
+            .slice(0, 5)
+            .map((p) => {
+              const asset = assets.find((a) => a.id === p.asset_id);
+              return `• ${asset?.name ?? "Unknown"} (${p.priority_level})\n  Score: ${p.priority_score}/100 | RUL: ${p.remaining_useful_life_hours.toLocaleString()}h | Window: ${p.maintenance_window}\n  Procurement: ${p.procurement_recommendation}`;
+            })
+            .join("\n\n"),
+        },
+        {
+          title: "Production Bottlenecks",
+          body: bottlenecks.length > 0
+            ? bottlenecks.map((b) => {
+                const asset = assets.find((a) => a.id === b.asset_id);
+                return `• ${b.bottleneck_type} (${b.severity})\n  Asset: ${asset?.name ?? "Unknown"}\n  Impact: ${b.production_impact_description}\n  Estimated cost: $${b.estimated_cost_usd.toLocaleString()}`;
+              }).join("\n\n")
+            : "No production bottlenecks identified.",
+        },
+        {
+          title: "Spare Parts Shortages",
+          body: shortages.length > 0
+            ? shortages.map((s) => `• ${s.part_name}\n  Stock: ${s.current_stock}/${s.reorder_point} | Lead: ${s.lead_time_days} days\n  Priority: ${s.priority}\n  Impact: ${s.impact_description}`).join("\n\n")
+            : "No spare shortages at this time.",
+        },
+        {
+          title: "Procurement Risk Analysis",
+          body: `Average procurement lead time: ${avgProcurementLead} days.\n\nAssets with lead time > 60 days:\n${priorities
+            .filter((p) => p.procurement_lead_time_days > 60)
+            .map((p) => {
+              const asset = assets.find((a) => a.id === p.asset_id);
+              return `• ${asset?.name ?? "Unknown"}: ${p.procurement_lead_time_days} days — ${p.procurement_recommendation}`;
+            })
+            .join("\n") || "None"}`,
+        },
+      ],
+      metrics: {
+        "Total Assets": assets.length,
+        "P1 Critical": p1Count,
+        "P2 High": p2Count,
+        "P3 Medium": p3Count,
+        "P4 Low": p4Count,
+        "Bottlenecks": bottlenecks.length,
+        "Spare Shortages": shortages.length,
+        "Avg Procurement Lead": `${avgProcurementLead} days`,
+        "Top Priority Score": `${priorities[0]?.priority_score ?? 0}/100`,
+      },
+      recommendations: [
+        ...(p1Count > 0 ? [`IMMEDIATE: Resolve ${p1Count} P1 critical assets within 24 hours`] : []),
+        ...(bottlenecks.length > 0 ? [`PRIORITY: Address ${bottlenecks.length} production bottlenecks impacting throughput`] : []),
+        ...(shortages.length > 0 ? [`URGENT: Order critical spares — ${shortages.length} items below reorder point`] : []),
+        "REVIEW: Conduct weekly priority review for all assets",
+        "UPDATE: Reassess process criticality for long-lead-time assets",
+      ],
+    },
+    generated_by: "MAN OF STEEL Priority Engine",
+    pdf_path: null,
+  };
+}
+
+export function buildFeedbackLearningReport() {
+  const insights = dataStore.getFeedbackInsights();
+  const feedback = dataStore.getFeedback();
+  const experiences = dataStore.getExperiences();
+
+  return {
+    report_type: "feedback_learning" as ReportType,
+    title: `Feedback Learning Report — ${insights.totalFeedback} Cases`,
+    asset_id: null,
+    plant_id: null,
+    content: {
+      executiveSummary: `Learning engine analyzed ${insights.totalFeedback} feedback cases. Accuracy rate: ${(insights.accuracyRate * 100).toFixed(0)}%. ${insights.correctCount} correct, ${insights.partiallyCorrectCount} partially correct, ${insights.incorrectCount} incorrect. ${experiences.length} total experience nodes.`,
+      sections: [
+        {
+          title: "Model Accuracy Overview",
+          body: `Total feedback cases: ${insights.totalFeedback}
+Correct predictions: ${insights.correctCount} (${(insights.correctCount / Math.max(1, insights.totalFeedback) * 100).toFixed(0)}%)
+Partially correct: ${insights.partiallyCorrectCount} (${(insights.partiallyCorrectCount / Math.max(1, insights.totalFeedback) * 100).toFixed(0)}%)
+Incorrect: ${insights.incorrectCount} (${(insights.incorrectCount / Math.max(1, insights.totalFeedback) * 100).toFixed(0)}%)
+Accuracy rate: ${(insights.accuracyRate * 100).toFixed(0)}%`,
+        },
+        {
+          title: "Recurring Incident Types",
+          body: insights.recurringIncidents.length > 0
+            ? insights.recurringIncidents.map((ri) => `• ${ri.incidentType}: ${ri.count} occurrences`).join("\n")
+            : "No recurring incidents documented.",
+        },
+        {
+          title: "Top Root Causes (from engineer feedback)",
+          body: insights.topRootCauses.length > 0
+            ? insights.topRootCauses.map((rc) => `• ${rc.rootCause}: ${rc.count} cases`).join("\n")
+            : "No root cause data available.",
+        },
+        {
+          title: "Recent Feedback Entries",
+          body: feedback.slice(0, 5).map((f) => {
+            const date = new Date(f.timestamp).toLocaleDateString();
+            return `[${date}] ${f.query}\n  Actual: ${f.actual_outcome.slice(0, 80)}...\n  Feedback: ${f.engineer_feedback}`;
+          }).join("\n\n"),
+        },
+      ],
+      metrics: {
+        "Total Feedback": insights.totalFeedback,
+        "Accuracy Rate": `${(insights.accuracyRate * 100).toFixed(0)}%`,
+        "Experience Nodes": experiences.length,
+        "Recurring Fault Types": insights.recurringIncidents.length,
+        "Root Causes Tracked": insights.topRootCauses.length,
+        "Learning Progress": experiences.length > 0
+          ? `${Math.round((experiences.filter((e) => e.fix_effective).length / experiences.length) * 100)}%`
+          : "N/A",
+      },
+      recommendations: [
+        ...(insights.accuracyRate < 0.6 ? ["PRIORITY: Retrain prediction model — accuracy below 60% threshold"] : []),
+        ...(insights.incorrectCount > 0 ? [`REVIEW: Analyze ${insights.incorrectCount} incorrect predictions for pattern`] : []),
+        "CONTINUE: Maintain feedback loop for continuous model improvement",
+        "ENHANCE: Add more experience nodes for rare failure modes",
+      ],
+    },
+    generated_by: "MAN OF STEEL Learning Engine",
+    pdf_path: null,
+  };
+}
+
+export function buildMaintenanceIntelligenceReport() {
+  const intel = dataStore.getIntelligence();
+  const assets = dataStore.getAssets();
+
+  const avgHealth = (assets.reduce((s, a) => s + a.health_score, 0) / assets.length).toFixed(1);
+  const riskyAssets = intel.riskEscalations.length;
+  const totalWarningCost = intel.bottlenecks.reduce((s, b) => s + b.estimated_cost_usd, 0);
+
+  return {
+    report_type: "intelligence" as ReportType,
+    title: `Maintenance Intelligence Report — Plant Health Status`,
+    asset_id: null,
+    plant_id: assets[0]?.plant_id ?? null,
+    content: {
+      executiveSummary: `Real-time intelligence summary. ${intel.earlyWarnings.length} early warnings active. ${intel.bottlenecks.length} production bottlenecks ($${totalWarningCost.toLocaleString()} total risk). ${intel.spareShortages.length} spare shortages. ${riskyAssets} risk escalations. Average asset health: ${avgHealth}%.`,
+      sections: [
+        {
+          title: "Early Failure Warnings",
+          body: intel.earlyWarnings.length > 0
+            ? intel.earlyWarnings.map((w) => {
+                const asset = assets.find((a) => a.id === w.asset_id);
+                return `• [${w.severity.toUpperCase()}] ${w.warning_type}\n  Asset: ${asset?.name ?? "Unknown"} | Confidence: ${(w.confidence * 100).toFixed(0)}%\n  ${w.description}`;
+              }).join("\n\n")
+            : "No early warnings at this time.",
+        },
+        {
+          title: "Risk Escalations",
+          body: intel.riskEscalations.length > 0
+            ? intel.riskEscalations.map((r) => `• ${r.assetName}: ${r.previousRisk} → ${r.currentRisk}\n  ${r.reason}`).join("\n\n")
+            : "No risk escalations.",
+        },
+        {
+          title: "Production Bottlenecks",
+          body: intel.bottlenecks.length > 0
+            ? intel.bottlenecks.map((b) => {
+                const asset = assets.find((a) => a.id === b.asset_id);
+                return `• ${b.bottleneck_type} (${b.severity})\n  ${b.description}\n  Downtime: ${b.estimated_downtime_hours}h | Cost: $${b.estimated_cost_usd.toLocaleString()}`;
+              }).join("\n\n")
+            : "No bottlenecks identified.",
+        },
+        {
+          title: "Spare Shortages",
+          body: intel.spareShortages.length > 0
+            ? intel.spareShortages.map((s) => `• ${s.part_name} — Stock: ${s.current_stock} (reorder at ${s.reorder_point})\n  Lead: ${s.lead_time_days} days | Priority: ${s.priority}\n  ${s.impact_description}`).join("\n\n")
+            : "No spare shortages.",
+        },
+        {
+          title: "Plant Health Ranking",
+          body: intel.plantHealthRanking.slice(0, 5).map((r) => `• ${r.assetName}: ${r.healthScore}% (${r.trend})`).join("\n"),
+        },
+      ],
+      metrics: {
+        "Early Warnings": intel.earlyWarnings.length,
+        "Production Bottlenecks": intel.bottlenecks.length,
+        "Spare Shortages": intel.spareShortages.length,
+        "Risk Escalations": riskyAssets,
+        "Backlog Items": intel.backlogRanking.length,
+        "Average Health": `${avgHealth}%`,
+        "Total Bottleneck Cost": `$${totalWarningCost.toLocaleString()}`,
+      },
+      recommendations: [
+        ...(intel.earlyWarnings.some((w) => w.severity === "critical") ? ["IMMEDIATE: Address critical early warnings — catastrophic failure risk"] : []),
+        ...(intel.bottlenecks.length > 0 ? ["PRIORITY: Resolve production bottlenecks to restore throughput"] : []),
+        ...(intel.spareShortages.some((s) => s.priority === "p1_critical") ? ["URGENT: Order critical spares with zero stock"] : []),
+        "MONITOR: Track asset health trends weekly",
+        "REVIEW: Conduct bottleneck analysis for top 3 constraints",
+      ],
+    },
+    generated_by: "MAN OF STEEL Intelligence Engine",
     pdf_path: null,
   };
 }
