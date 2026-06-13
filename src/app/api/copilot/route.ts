@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { dataStore } from "@/lib/data/store";
 import { runAgentWorkflow } from "@/lib/agents/graph";
 import { checkRateLimit } from "@/lib/rate-limiter";
+import type { ChatMessage } from "@/lib/agents/state";
 
 export async function GET() {
   return NextResponse.json({ conversations: dataStore.getConversations() });
@@ -47,8 +48,17 @@ export async function POST(req: Request) {
       metadata: {},
     });
 
+    const previousMessages = dataStore.getMessages(conversation.id);
+    const chatHistory: ChatMessage[] = previousMessages
+      .filter((m) => m.role === "user" || m.role === "assistant")
+      .slice(-6)
+      .map((m) => ({
+        role: m.role === "user" ? "user" : "assistant",
+        content: m.content,
+      }));
+
     const start = Date.now();
-    const result = await runAgentWorkflow(query, assetId ?? conversation.asset_id);
+    const result = await runAgentWorkflow(query, assetId ?? conversation.asset_id, chatHistory);
     const duration = Date.now() - start;
 
     const assistantMsg = dataStore.addMessage({

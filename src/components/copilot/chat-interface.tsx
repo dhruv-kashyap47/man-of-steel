@@ -15,6 +15,8 @@ import {
   Activity,
   ChevronRight,
   CheckCircle2,
+  Globe,
+  MessageCircle,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { RiskBadge } from "@/components/shared/status-badge";
@@ -26,17 +28,18 @@ import type { Asset, CopilotMessage } from "@/types/database";
 import type { AgentDecision } from "@/types";
 
 const SUGGESTED_QUERIES = [
+  "Hi! What can you help me with?",
   "What is causing the elevated vibration on Blast Furnace Fan A?",
   "Predict failure probability for the hydraulic pump",
-  "What maintenance procedure should I follow for bearing replacement?",
+  "What are the latest trends in predictive maintenance?",
   "What-if: vibration increases to 8 mm/s on the rolling mill",
-  "Analyze root cause of pressure instability on HP-4421",
 ];
 
 const AGENT_ICONS: Record<string, React.ElementType> = {
   planner: Target,
   knowledge: BookOpen,
   prediction: Cpu,
+  webSearch: Globe,
   decision: Brain,
 };
 
@@ -117,9 +120,9 @@ export function ChatInterface() {
   return (
     <div className="flex h-[calc(100vh)] flex-col">
       <PageHeader
-        badge="Multi-Agent Intelligence"
+        badge="AI Engineer · Chat + Diagnostics"
         title="AI Copilot"
-        subtitle="Diagnostics · Root Cause · Recommendations · What-If Analysis"
+        subtitle="Chat · Diagnostics · Web Search · Predictions · Solutions"
         actions={
           <select
             value={selectedAsset}
@@ -142,11 +145,11 @@ export function ChatInterface() {
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 && (
               <div className="flex flex-col items-center justify-center py-16 text-center">
-                <Sparkles className="mb-4 h-10 w-10 text-accent" />
-                <h3 className="text-lg font-semibold text-foreground">MAN OF STEEL Agent System</h3>
+                <MessageCircle className="mb-4 h-10 w-10 text-accent" />
+                <h3 className="text-lg font-semibold text-foreground">MAN OF STEEL AI Copilot</h3>
                 <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                  Four specialized agents collaborate to diagnose issues, search knowledge bases,
-                  predict failures, and recommend actions.
+                  Hey there! I'm your maintenance AI — part engineer, part technician. I can help with
+                  diagnostics, predictions, web research, or just chat about industrial tech.
                 </p>
                 <div className="mt-6 grid max-w-2xl gap-2">
                   {SUGGESTED_QUERIES.map((q) => (
@@ -227,7 +230,7 @@ export function ChatInterface() {
             {loading && (
               <div className="flex items-center gap-2 text-sm text-cyan-400">
                 <Loader2 className="h-4 w-4 animate-spin" />
-                Agents investigating...
+                Thinking... {lastDecision?.agentsInvoked?.includes("webSearch") ? "(searching web)" : ""}
               </div>
             )}
             <div ref={bottomRef} />
@@ -240,7 +243,7 @@ export function ChatInterface() {
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
-                placeholder="Ask about diagnostics, root cause, predictions, or what-if scenarios..."
+                placeholder="Ask me anything — diagnostics, web search, or just chat..."
                 className="flex-1 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm focus:border-cyan-500/50 focus:outline-none"
                 disabled={loading}
               />
@@ -265,7 +268,7 @@ export function ChatInterface() {
             <div className="relative">
               {/* Pipeline flow line */}
               <div className="absolute left-[19px] top-2 bottom-2 w-px bg-border" />
-              {["planner", "knowledge", "prediction", "decision"].map((agent, idx) => {
+              {["planner", "knowledge", "prediction", "webSearch", "decision"].map((agent, idx) => {
                 const Icon = AGENT_ICONS[agent];
                 const invoked = lastDecision?.agentsInvoked?.includes(agent);
                 return (
@@ -286,12 +289,13 @@ export function ChatInterface() {
                       <Icon className={`h-4 w-4 ${invoked ? "text-accent" : "text-muted-foreground"}`} />
                     </div>
                     <div className="flex-1">
-                      <p className="text-sm font-medium capitalize">{agent}</p>
+                      <p className="text-sm font-medium capitalize">{agent === "webSearch" ? "Web Search" : agent}</p>
                       <p className="text-[10px] text-muted-foreground">
-                        {agent === "planner" && "Query decomposition"}
+                        {agent === "planner" && "Intent detection"}
                         {agent === "knowledge" && "Document retrieval"}
                         {agent === "prediction" && "Failure analysis"}
-                        {agent === "decision" && "Root cause synthesis"}
+                        {agent === "webSearch" && "Web research"}
+                        {agent === "decision" && "Response generation"}
                       </p>
                     </div>
                     {invoked && (

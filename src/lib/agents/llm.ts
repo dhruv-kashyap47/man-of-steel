@@ -14,8 +14,8 @@ export function createLLM() {
         "X-Title": "MAN OF STEEL",
       },
     },
-    temperature: 0.3,
-    maxTokens: 2000,
+    temperature: 0.7,
+    maxTokens: 4000,
   });
 }
 

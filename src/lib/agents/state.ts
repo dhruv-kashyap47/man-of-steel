@@ -2,6 +2,17 @@ import { Annotation } from "@langchain/langgraph";
 import type { Citation, RiskLevel, PriorityLevel } from "@/types/database";
 import type { PredictionResult, PriorityData } from "@/types";
 
+export interface ChatMessage {
+  role: "user" | "assistant";
+  content: string;
+}
+
+export interface WebSearchResult {
+  title: string;
+  url: string;
+  snippet: string;
+}
+
 export const AgentState = Annotation.Root({
   query: Annotation<string>,
   assetId: Annotation<string | null>,
@@ -34,6 +45,9 @@ export const AgentState = Annotation.Root({
   immediateActions: Annotation<string[]>,
   longTermActions: Annotation<string[]>,
   consequencesOfInaction: Annotation<string>,
+  conversationHistory: Annotation<ChatMessage[]>,
+  webSearchResults: Annotation<WebSearchResult[]>,
+  intent: Annotation<"chat" | "diagnosis" | "prediction" | "procedure" | "whatif" | "general">,
 });
 
 export type AgentStateType = typeof AgentState.State;
