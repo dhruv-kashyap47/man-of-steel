@@ -175,7 +175,7 @@ export function MaintenanceIntelligence() {
                   </div>
                   <p className="text-xs text-foreground">{b.description}</p>
                   <p className="mt-1 text-[10px] text-muted-foreground">
-                    Downtime: {b.estimated_downtime_hours}h — {b.production_impact_description}
+                    Downtime: {b.estimated_downtime_hours}h ▸ {b.production_impact_description}
                   </p>
                 </motion.div>
               ))}

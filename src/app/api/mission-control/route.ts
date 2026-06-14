@@ -10,12 +10,12 @@ function computeRootCauses(assets: Asset[], predictions: FailurePrediction[]) {
     const asset = assets.find((a) => a.id === pred.asset_id);
     const cause =
       pred.failure_probability > 0.75
-        ? "Bearing degradation progressing rapidly — high wear particle count detected"
+        ? "Bearing degradation progressing rapidly ▸ high wear particle count detected"
         : pred.failure_probability > 0.5
-          ? "Lubrication film breakdown — marginal oil viscosity and elevated temperature"
+          ? "Lubrication film breakdown ▸ marginal oil viscosity and elevated temperature"
           : pred.failure_probability > 0.3
-            ? "Minor misalignment detected — coupling wear within acceptable band"
-            : "Normal wear patterns — no immediate intervention required";
+            ? "Minor misalignment detected ▸ coupling wear within acceptable band"
+            : "Normal wear patterns ▸ no immediate intervention required";
     const confidence = 0.65 + pred.failure_probability * 0.3;
     const evidence: string[] = [];
     if (pred.predicted_failure_mode) {

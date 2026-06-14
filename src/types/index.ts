@@ -52,10 +52,10 @@ export const SEVERITY_LABELS: Record<string, string> = {
 };
 
 export const PRIORITY_LEVEL_LABELS: Record<string, string> = {
-  p1_critical: "P1 — Critical",
-  p2_high: "P2 — High",
-  p3_medium: "P3 — Medium",
-  p4_low: "P4 — Low",
+  p1_critical: "P1 ▸ Critical",
+  p2_high: "P2 ▸ High",
+  p3_medium: "P3 ▸ Medium",
+  p4_low: "P4 ▸ Low",
 };
 
 export const PRIORITY_LEVEL_COLORS: Record<string, string> = {

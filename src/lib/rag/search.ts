@@ -42,7 +42,7 @@ export async function semanticSearch(options: SearchOptions): Promise<Citation[]
         document_title: doc.title,
         document_type: doc.document_type,
         chunk_index: chunk.chunk_index,
-        content_snippet: chunk.content.slice(0, 300),
+        content_snippet: chunk.content.slice(0, 350),
         similarity,
       };
     })

@@ -81,7 +81,7 @@ export function KnowledgeVault() {
       <PageHeader
         badge="Semantic Knowledge Base"
         title="Knowledge Vault"
-        subtitle="Manuals, SOPs, incident reports — semantic search with citations"
+        subtitle="Manuals, SOPs, incident reports ▸ semantic search with citations"
       />
 
       <div className="p-8 space-y-6">

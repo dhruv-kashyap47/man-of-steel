@@ -97,7 +97,7 @@ export function MissionControlDashboard() {
       <PageHeader
         badge="Command Center"
         title="Mission Control"
-        subtitle={`${APP_CONFIG.plantName} — Real-time plant health and AI insights`}
+        subtitle={`${APP_CONFIG.plantName} ▸ Real-time plant health and AI insights`}
         actions={
           <Badge variant="cyan" className="gap-1">
             <Activity className="h-3 w-3" /> LIVE

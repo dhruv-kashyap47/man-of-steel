@@ -11,7 +11,7 @@ export function buildIncidentReport(assetId: string) {
 
   return {
     report_type: "incident" as ReportType,
-    title: `Incident Report — ${asset.name} (${asset.serial_number})`,
+    title: `Incident Report ▸ ${asset.name} (${asset.serial_number})`,
     asset_id: assetId,
     plant_id: asset.plant_id,
     content: {
@@ -19,7 +19,7 @@ export function buildIncidentReport(assetId: string) {
       sections: [
         {
           title: "Incident Overview",
-          body: alerts.map((a) => `${a.severity.toUpperCase()}: ${a.title} — ${a.description}`).join("\n\n") || "No active alerts.",
+          body: alerts.map((a) => `${a.severity.toUpperCase()}: ${a.title} ▸ ${a.description}`).join("\n\n") || "No active alerts.",
         },
         {
           title: "Failure Prediction",
@@ -58,7 +58,7 @@ export function buildMaintenanceReport(assetId: string) {
 
   return {
     report_type: "maintenance" as ReportType,
-    title: `Maintenance Report — ${asset.name}`,
+    title: `Maintenance Report ▸ ${asset.name}`,
     asset_id: assetId,
     plant_id: asset.plant_id,
     content: {
@@ -124,7 +124,7 @@ export function buildExecutiveSummary() {
 
   return {
     report_type: "executive_summary" as ReportType,
-    title: `Executive Summary — ${plant.name}`,
+    title: `Executive Summary ▸ ${plant.name}`,
     asset_id: null,
     plant_id: plant.id,
     content: {
@@ -135,7 +135,7 @@ export function buildExecutiveSummary() {
           body: `Overall plant health is ${plant.health_score >= 80 ? "GOOD (Green)" : plant.health_score >= 60 ? "FAIR (Amber)" : "AT RISK (Red)"}. Facility: ${plant.name}. Capacity: ${plant.capacity}. Location: ${plant.location}. Assets under management: ${assets.length}. Average asset health across fleet: ${avgHealth}%.`,
         },
         {
-          title: "Critical Assets — Risk Assessment",
+          title: "Critical Assets ▸ Risk Assessment",
           body:
             critical.length > 0
               ? critical.map((a) => {
@@ -179,7 +179,7 @@ export function buildExecutiveSummary() {
       },
       recommendations: [
         ...(criticalCount > 0 ? [`IMMEDIATE: Escalate and resolve ${criticalCount} critical alert(s) within 2 hours`] : []),
-        ...(topRiskAsset ? [`PRIORITY: Schedule emergency inspection for ${topRiskAsset.name} — failure probability ${(topRisk!.failure_probability * 100).toFixed(1)}%`] : []),
+        ...(topRiskAsset ? [`PRIORITY: Schedule emergency inspection for ${topRiskAsset.name} ▸ failure probability ${(topRisk!.failure_probability * 100).toFixed(1)}%`] : []),
         ...insights
           .filter((i) => i.priority >= 3)
           .map((i) => i.summary)
@@ -210,7 +210,7 @@ export function buildPriorityReport() {
 
   return {
     report_type: "priority" as ReportType,
-    title: `Maintenance Priority Report — ${assets.length} Assets`,
+    title: `Maintenance Priority Report ▸ ${assets.length} Assets`,
     asset_id: null,
     plant_id: assets[0]?.plant_id ?? null,
     content: {
@@ -218,7 +218,7 @@ export function buildPriorityReport() {
       sections: [
         {
           title: "Priority Distribution",
-          body: `P1 Critical: ${p1Count} assets requiring immediate action within 24 hours.\nP2 High: ${p2Count} assets requiring intervention within 7 days.\nP3 Medium: ${p3Count} assets — schedule during next planned shutdown.\nP4 Low: ${p4Count} assets — continue routine monitoring.`,
+          body: `P1 Critical: ${p1Count} assets requiring immediate action within 24 hours.\nP2 High: ${p2Count} assets requiring intervention within 7 days.\nP3 Medium: ${p3Count} assets ▸ schedule during next planned shutdown.\nP4 Low: ${p4Count} assets ▸ continue routine monitoring.`,
         },
         {
           title: "Top 5 Critical Assets",
@@ -252,7 +252,7 @@ export function buildPriorityReport() {
             .filter((p) => p.procurement_lead_time_days > 60)
             .map((p) => {
               const asset = assets.find((a) => a.id === p.asset_id);
-              return `• ${asset?.name ?? "Unknown"}: ${p.procurement_lead_time_days} days — ${p.procurement_recommendation}`;
+              return `• ${asset?.name ?? "Unknown"}: ${p.procurement_lead_time_days} days ▸ ${p.procurement_recommendation}`;
             })
             .join("\n") || "None"}`,
         },
@@ -271,7 +271,7 @@ export function buildPriorityReport() {
       recommendations: [
         ...(p1Count > 0 ? [`IMMEDIATE: Resolve ${p1Count} P1 critical assets within 24 hours`] : []),
         ...(bottlenecks.length > 0 ? [`PRIORITY: Address ${bottlenecks.length} production bottlenecks impacting throughput`] : []),
-        ...(shortages.length > 0 ? [`URGENT: Order critical spares — ${shortages.length} items below reorder point`] : []),
+        ...(shortages.length > 0 ? [`URGENT: Order critical spares ▸ ${shortages.length} items below reorder point`] : []),
         "REVIEW: Conduct weekly priority review for all assets",
         "UPDATE: Reassess process criticality for long-lead-time assets",
       ],
@@ -288,7 +288,7 @@ export function buildFeedbackLearningReport() {
 
   return {
     report_type: "feedback_learning" as ReportType,
-    title: `Feedback Learning Report — ${insights.totalFeedback} Cases`,
+    title: `Feedback Learning Report ▸ ${insights.totalFeedback} Cases`,
     asset_id: null,
     plant_id: null,
     content: {
@@ -333,7 +333,7 @@ Accuracy rate: ${(insights.accuracyRate * 100).toFixed(0)}%`,
           : "N/A",
       },
       recommendations: [
-        ...(insights.accuracyRate < 0.6 ? ["PRIORITY: Retrain prediction model — accuracy below 60% threshold"] : []),
+        ...(insights.accuracyRate < 0.6 ? ["PRIORITY: Retrain prediction model ▸ accuracy below 60% threshold"] : []),
         ...(insights.incorrectCount > 0 ? [`REVIEW: Analyze ${insights.incorrectCount} incorrect predictions for pattern`] : []),
         "CONTINUE: Maintain feedback loop for continuous model improvement",
         "ENHANCE: Add more experience nodes for rare failure modes",
@@ -354,7 +354,7 @@ export function buildMaintenanceIntelligenceReport() {
 
   return {
     report_type: "intelligence" as ReportType,
-    title: `Maintenance Intelligence Report — Plant Health Status`,
+    title: `Maintenance Intelligence Report ▸ Plant Health Status`,
     asset_id: null,
     plant_id: assets[0]?.plant_id ?? null,
     content: {
@@ -387,7 +387,7 @@ export function buildMaintenanceIntelligenceReport() {
         {
           title: "Spare Shortages",
           body: intel.spareShortages.length > 0
-            ? intel.spareShortages.map((s) => `• ${s.part_name} — Stock: ${s.current_stock} (reorder at ${s.reorder_point})\n  Lead: ${s.lead_time_days} days | Priority: ${s.priority}\n  ${s.impact_description}`).join("\n\n")
+            ? intel.spareShortages.map((s) => `• ${s.part_name} ▸ Stock: ${s.current_stock} (reorder at ${s.reorder_point})\n  Lead: ${s.lead_time_days} days | Priority: ${s.priority}\n  ${s.impact_description}`).join("\n\n")
             : "No spare shortages.",
         },
         {
@@ -405,7 +405,7 @@ export function buildMaintenanceIntelligenceReport() {
         "Total Bottleneck Cost": `$${totalWarningCost.toLocaleString()}`,
       },
       recommendations: [
-        ...(intel.earlyWarnings.some((w) => w.severity === "critical") ? ["IMMEDIATE: Address critical early warnings — catastrophic failure risk"] : []),
+        ...(intel.earlyWarnings.some((w) => w.severity === "critical") ? ["IMMEDIATE: Address critical early warnings ▸ catastrophic failure risk"] : []),
         ...(intel.bottlenecks.length > 0 ? ["PRIORITY: Resolve production bottlenecks to restore throughput"] : []),
         ...(intel.spareShortages.some((s) => s.priority === "p1_critical") ? ["URGENT: Order critical spares with zero stock"] : []),
         "MONITOR: Track asset health trends weekly",

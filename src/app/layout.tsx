@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: `${APP_CONFIG.name} — ${APP_CONFIG.tagline}`,
+  title: `${APP_CONFIG.name} ▸ ${APP_CONFIG.tagline}`,
   description:
     "AI-powered industrial maintenance intelligence platform for steel manufacturing.",
   icons: {

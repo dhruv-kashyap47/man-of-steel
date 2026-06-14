@@ -5,24 +5,29 @@ import { predictFromLatestSensors } from "@/lib/ml/predict";
 import { invokeLLM } from "./llm";
 import { searchWeb, formatWebResults } from "./web-search";
 import { AgentState, type AgentStateType, type ChatMessage } from "./state";
-import type { RiskLevel, PriorityLevel } from "@/types/database";
+import type { RiskLevel } from "@/types/database";
 
-const CHAT_KEYWORDS = ["hello", "hi ", "hey", "how are you", "what's up", "good morning", "good evening", "thanks", "thank", "who are you", "what can you do", "help me"];
-const WEB_SEARCH_KEYWORDS = ["search", "look up", "find online", "what is", "who is", "latest", "news", "google", "browse", "internet", "web"];
+const SHORT_GREETINGS = ["hello", "hi", "hey", "yo", "sup"];
+const CHAT_KEYWORDS = ["how are you", "what's up", "good morning", "good evening", "thanks", "thank", "who are you", "what can you do", "help me", "help"];
+const WEB_SEARCH_KEYWORDS = ["search", "look up", "find online", "latest", "news", "google", "browse", "internet", "web"];
 
 async function plannerNode(state: AgentStateType): Promise<Partial<AgentStateType>> {
-  const query = state.query.toLowerCase().trim();
+  const raw = state.query.trim();
+  const query = raw.toLowerCase().trim();
   const workflow: string[] = ["planner"];
 
   let intent: "chat" | "diagnosis" | "prediction" | "procedure" | "whatif" | "general" = "general";
 
-  if (CHAT_KEYWORDS.some(k => query.startsWith(k) || query === k || query.endsWith(k))) {
+  if ((query.length <= 5 && SHORT_GREETINGS.some(k => query === k || query.startsWith(k + " ") || query.endsWith(" " + k) || query.includes(" " + k + " ")))) {
+    intent = "chat";
+    workflow.push("decision");
+  } else if (CHAT_KEYWORDS.some(k => query === k || query.startsWith(k) || query.endsWith(k))) {
     intent = "chat";
     workflow.push("decision");
   } else if (query.includes("what if") || query.includes("what-if") || query.includes("simulate")) {
     intent = "whatif";
     workflow.push("predictor", "decision");
-  } else if (query.includes("predict") || query.includes("rul") || query.includes("failure")) {
+  } else if (query.includes("predict") || query.includes("rul") || query.includes("failure") || query.includes("probability")) {
     intent = "prediction";
     workflow.push("predictor", "knowledge", "experience", "decision");
   } else if (query.includes("manual") || query.includes("sop") || query.includes("procedure") || query.includes("how to")) {
@@ -31,7 +36,7 @@ async function plannerNode(state: AgentStateType): Promise<Partial<AgentStateTyp
   } else if (query.includes("priority") || query.includes("critical") || query.includes("urgent")) {
     intent = "diagnosis";
     workflow.push("predictor", "knowledge", "experience", "decision");
-  } else if (query.includes("vibration") || query.includes("temperature") || query.includes("pressure") || query.includes("diagnos") || query.includes("root cause") || query.includes("why is")) {
+  } else if (query.includes("vibration") || query.includes("temperature") || query.includes("pressure") || query.includes("diagnos") || query.includes("root cause") || query.includes("why is") || query.includes("symptom") || query.includes("issue") || query.includes("problem")) {
     intent = "diagnosis";
     workflow.push("predictor", "knowledge", "experience", "decision");
   } else {
@@ -40,10 +45,10 @@ async function plannerNode(state: AgentStateType): Promise<Partial<AgentStateTyp
   }
 
   const needsWebSearch = WEB_SEARCH_KEYWORDS.some(k => query.includes(k))
-    || (intent === "general" && query.length > 10)
+    || (intent === "general" && query.length > 10 && !SHORT_GREETINGS.some(g => query.startsWith(g)))
     || query.includes("solution") || query.includes("alternative") || query.includes("best practice");
 
-  if (needsWebSearch) {
+  if (needsWebSearch && workflow.includes("decision")) {
     workflow.splice(workflow.indexOf("decision"), 0, "webSearch");
   }
 
@@ -205,7 +210,7 @@ async function decisionNode(state: AgentStateType): Promise<Partial<AgentStateTy
   const hasWebResults = state.webSearchResults && state.webSearchResults.length > 0;
   const hasCitations = state.citations && state.citations.length > 0;
 
-  const systemPrompt = `You are the AI Copilot for MAN OF STEEL — the industrial maintenance intelligence platform for Tata Steel Integrated Plant.
+  const systemPrompt = `You are the AI Copilot for MAN OF STEEL ▸ the industrial maintenance intelligence platform for Tata Steel Integrated Plant.
 
 YOUR PERSONALITY:
 - You're a knowledgeable, friendly senior maintenance engineer and technician rolled into one
@@ -256,7 +261,7 @@ ${conversationGuidance}
 - Health Score: ${asset?.health_score ?? "N/A"}
 - Status: ${asset?.status ?? "N/A"}${historyContext}
 
-## System Data${isChattyIntent ? " (optional — use if helpful)" : ""}
+## System Data${isChattyIntent ? " (optional ▸ use if helpful)" : ""}
 ### Prediction
 ${predictionText}
 
@@ -300,7 +305,7 @@ Respond naturally and helpfully. Be the best engineer-technician hybrid the user
       // fall through to raw response
     }
     return {
-      rootCause: isChattyIntent ? "" : "AI analysis complete — see response",
+      rootCause: isChattyIntent ? "" : "AI analysis complete ▸ see response",
       riskLevel: isChattyIntent ? "low" : (state.prediction?.riskLevel ?? "medium") as RiskLevel,
       recommendedActions: isChattyIntent ? [] : [],
       businessImpact: isChattyIntent ? "" : "See detailed response",
@@ -311,17 +316,9 @@ Respond naturally and helpfully. Be the best engineer-technician hybrid the user
     };
   }
 
+  // LLM unavailable ▸ generate smart fallback responses
   if (isChattyIntent) {
-    return {
-      rootCause: "",
-      riskLevel: "low" as RiskLevel,
-      recommendedActions: [],
-      businessImpact: "",
-      executiveSummary: "Conversational response",
-      response: "Hey there! I'm the MAN OF STEEL AI Copilot. I can help you with maintenance diagnostics, failure predictions, root cause analysis, and technical guidance. What can I help you with?",
-      agentsInvoked: [...(state.agentsInvoked ?? []), "decision"],
-      confidence: 0.9,
-    };
+    return generateChatFallback(state);
   }
 
   return ruleBasedDecision(state, asset ?? undefined);
@@ -405,10 +402,10 @@ ${pred ? `- Failure Probability: **${(pred.failureProbability * 100).toFixed(1)}
 ## 5. SENSOR INTERPRETATION
 
 ${pred
-  ? `- Temperature: ${pred.features.temperature_c.toFixed(1)}°C ${pred.features.temperature_c > 75 ? "(WARNING — above threshold)" : "(within normal range)"}
+  ? `- Temperature: ${pred.features.temperature_c.toFixed(1)}°C ${pred.features.temperature_c > 75 ? "(WARNING ▸ above threshold)" : "(within normal range)"}
 - Pressure: ${pred.features.pressure_bar.toFixed(1)} bar ${pred.features.pressure_bar > 8.5 ? "(WARNING)" : "(normal)"}
-- RPM: ${pred.features.rpm.toFixed(0)} ${pred.features.rpm > 3200 ? "(HIGH — monitoring recommended)" : "(normal)"}
-- Vibration: ${pred.features.vibration_mm_s.toFixed(2)} mm/s ${pred.features.vibration_mm_s > 4.5 ? "(WARNING — above threshold)" : "(within limits)"}`
+- RPM: ${pred.features.rpm.toFixed(0)} ${pred.features.rpm > 3200 ? "(HIGH ▸ monitoring recommended)" : "(normal)"}
+- Vibration: ${pred.features.vibration_mm_s.toFixed(2)} mm/s ${pred.features.vibration_mm_s > 4.5 ? "(WARNING ▸ above threshold)" : "(within limits)"}`
   : "Sensor data not available for interpretation."}
 
 ## 6. SIMILAR HISTORICAL CASES
@@ -475,10 +472,10 @@ ${priority && priority.procurementLeadTimeDays > 60
 **${(confidenceScore * 100).toFixed(0)}%** confidence in this assessment.
 
 ${confidenceScore > 0.8
-  ? "High confidence — strong correlation between sensor data, historical patterns, and prediction model."
+  ? "High confidence ▸ strong correlation between sensor data, historical patterns, and prediction model."
   : confidenceScore > 0.6
-    ? "Moderate confidence — recommend additional data collection to improve accuracy."
-    : "Low confidence — manual inspection recommended to validate findings."}
+    ? "Moderate confidence ▸ recommend additional data collection to improve accuracy."
+    : "Low confidence ▸ manual inspection recommended to validate findings."}
 
 ## 15. SOURCE CITATIONS
 
@@ -507,6 +504,134 @@ ${citations.length > 0
       : [],
     sourceCitations: citations.map((c) => `${c.document_title} (${(c.similarity * 100).toFixed(0)}%)`),
     historicalCases: state.historicalCases ?? experiences.map((e) => `${e.incidentType}: ${e.fixApplied}`),
+  };
+}
+
+function generateChatFallback(state: AgentStateType): Partial<AgentStateType> {
+  const plant = dataStore.getPlant();
+  const allAssets = dataStore.getAssets();
+  const criticalCount = allAssets.filter(a => a.status === "critical" || a.risk_level === "critical").length;
+  const activeAlerts = dataStore.getActiveAlerts();
+  const topPriority = dataStore.getPriorities().slice(0, 3);
+  const queryLower = state.query.toLowerCase();
+
+  // General knowledge question about plant health
+  if (queryLower.includes("health") || queryLower.includes("status") || queryLower.includes("how is") || queryLower.includes("how are")) {
+    const worst = [...allAssets].sort((a, b) => a.health_score - b.health_score)[0];
+    return {
+      rootCause: "",
+      riskLevel: "low" as RiskLevel,
+      recommendedActions: [],
+      businessImpact: "",
+      executiveSummary: `Plant health report: ${plant.health_score.toFixed(0)}% overall`,
+      response: `## Plant Health Overview
+
+**Overall Health Score:** ${plant.health_score.toFixed(1)}% · ${criticalCount > 0 ? "⚠️ Attention Required" : "✅ All Nominal"}
+
+### Critical Alerts: ${activeAlerts.filter(a => a.severity === "critical").length}
+### Active Alerts: ${activeAlerts.length}
+### Assets Monitored: ${allAssets.length}
+
+${criticalCount > 0 ? `**Assets needing immediate attention:** ${allAssets.filter(a => a.risk_level === "critical").map(a => `\n- **${a.name}** ▸ ${a.health_score}% health, risk: ${a.risk_level}`).join("")}` : ""}
+
+${worst && worst.health_score < 60 ? `**⚠️ Lowest health asset:** ${worst.name} at ${worst.health_score}%` : "**✅** All assets above 60% health threshold."}
+
+Would you like me to run a detailed diagnosis on any specific asset?`,
+      agentsInvoked: [...(state.agentsInvoked ?? []), "decision"],
+      confidence: 0.9,
+    };
+  }
+
+  // What assets / what machines exist
+  if (queryLower.includes("asset") || queryLower.includes("machine") || queryLower.includes("equipment") || queryLower.includes("what do you have")) {
+    const byStatus: Record<string, typeof allAssets> = {};
+    allAssets.forEach(a => { byStatus[a.status] = [...(byStatus[a.status] ?? []), a]; });
+    return {
+      rootCause: "",
+      riskLevel: "low" as RiskLevel,
+      recommendedActions: [],
+      businessImpact: "",
+      executiveSummary: `${allAssets.length} assets across ${allAssets.filter((a,i,arr) => arr.findIndex(x => x.machine_type === a.machine_type) === i).length} machine types`,
+      response: `## Assets Under Monitoring
+
+**Total:** ${allAssets.length} assets · **${allAssets.filter((a,i,arr) => arr.findIndex(x => x.machine_type === a.machine_type) === i).length}** machine types
+
+### By Status:
+${Object.entries(byStatus).map(([status, assets]) => `- **${status}:** ${assets.length} asset(s)`).join("\n")}
+
+### Critical Assets:
+${allAssets.filter(a => a.risk_level === "critical").map(a => `- **${a.name}** (${a.serial_number}) ▸ ${a.health_score}% health, ${a.location_zone}`).join("\n") || "None"}
+
+Select an asset from the dropdown above to run diagnostics, or ask me about a specific machine!`,
+      agentsInvoked: [...(state.agentsInvoked ?? []), "decision"],
+      confidence: 0.9,
+    };
+  }
+
+  // Generic greeting fallback
+  const greetingResponse = queryLower.includes("who are you") || queryLower.includes("what can you do")
+    ? `## MAN OF STEEL AI Copilot
+
+I'm your integrated maintenance intelligence platform for **${plant.name}**. Here's what I can do:
+
+### Diagnostics
+Analyze sensor data to identify root causes of vibration, temperature, pressure, and performance anomalies across **${allAssets.length} assets**.
+
+### Predictions
+Predict failure probabilities, remaining useful life (RUL), and failure modes using our XGBoost ML engine.
+
+### Knowledge Retrieval
+Search **${dataStore.getKnowledgeDocuments().length} technical documents** ▸ manuals, SOPs, incident reports ▸ with semantic RAG.
+
+### Web Research
+Pull live data from the web for latest maintenance techniques, parts pricing, and industry best practices.
+
+### Priority & Planning
+Rank assets by maintenance urgency with business impact analysis and procurement recommendations.
+
+**Right now:** ${criticalCount > 0 ? `${criticalCount} asset(s) need immediate attention.` : "All assets operating within normal parameters."}
+
+What would you like me to help you with?`
+
+    : queryLower.includes("thank")
+      ? "You're welcome! I'm here 24/7 to help keep the plant running. Anything else you'd like me to look into ▸ diagnostics, predictions, or a quick check on any asset?"
+      : queryLower.includes("how are you")
+        ? `I'm running at peak efficiency! ${plant.health_score.toFixed(1)}% plant health score, ${criticalCount > 0 ? `${criticalCount} critical alerts active` : "all systems nominal"}. How can I help you keep things running smoothly today?`
+        : queryLower.includes("help") || queryLower.includes("what can i")
+          ? `## How Can I Help You?
+
+I'm your AI engineer for **${plant.name}**. Some things you can ask me:
+
+• *"What's causing vibration on Blast Furnace Fan A?"* ▸ Root cause diagnosis
+• *"Predict failure for hydraulic pump"* ▸ ML-based failure prediction
+• *"Search for bearing replacement SOP"* ▸ Knowledge document retrieval
+• *"What are the latest predictive maintenance trends?"* ▸ Web research
+• *"What if vibration reaches 8mm/s?"* ▸ What-if simulation
+• *"Show me critical priorities"* ▸ Maintenance priority ranking`
+          : `## Hey there! I'm the MAN OF STEEL AI Copilot
+
+Plant status: **${plant.health_score.toFixed(0)}%** health · **${criticalCount}** critical alerts · **${activeAlerts.length}** active alerts
+
+I can help with **diagnostics**, **failure predictions**, **root cause analysis**, **knowledge search**, and **maintenance planning**.
+
+${topPriority.length > 0 ? `**Top priority:** ${topPriority[0].business_impact_summary.slice(0, 140)}...` : ""}
+
+**Try asking me about:**
+• Asset diagnostics ▸ *"What's wrong with Blast Furnace Fan A?"*
+• Failure prediction ▸ *"Predict failure for Hydraulic Pump H1"*
+• Knowledge search ▸ *"Show me the bearing replacement SOP"*
+• Plant health ▸ *"What's the overall plant health?"*
+• Web research ▸ *"Latest predictive maintenance trends"*`;
+
+  return {
+    rootCause: "",
+    riskLevel: "low" as RiskLevel,
+    recommendedActions: [],
+    businessImpact: "",
+    executiveSummary: "Conversational response",
+    response: greetingResponse,
+    agentsInvoked: [...(state.agentsInvoked ?? []), "decision"],
+    confidence: 0.95,
   };
 }
 

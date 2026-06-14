@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   Send,
@@ -16,7 +16,9 @@ import {
   ChevronRight,
   CheckCircle2,
   Globe,
-  MessageCircle,
+
+  Zap,
+  Radio,
 } from "lucide-react";
 import { PageHeader } from "@/components/layout/page-header";
 import { RiskBadge } from "@/components/shared/status-badge";
@@ -35,6 +37,8 @@ const SUGGESTED_QUERIES = [
   "What-if: vibration increases to 8 mm/s on the rolling mill",
 ];
 
+const AGENT_ORDER = ["planner", "knowledge", "prediction", "webSearch", "decision"];
+
 const AGENT_ICONS: Record<string, React.ElementType> = {
   planner: Target,
   knowledge: BookOpen,
@@ -42,6 +46,157 @@ const AGENT_ICONS: Record<string, React.ElementType> = {
   webSearch: Globe,
   decision: Brain,
 };
+
+const AGENT_LABELS: Record<string, string> = {
+  planner: "Planning",
+  knowledge: "Knowledge",
+  prediction: "Prediction",
+  webSearch: "Web Search",
+  decision: "Decision",
+};
+
+const AGENT_DESCRIPTIONS: Record<string, string> = {
+  planner: "Analyzing intent",
+  knowledge: "Retrieving documents",
+  prediction: "Calculating risk",
+  webSearch: "Searching web",
+  decision: "Generating response",
+};
+
+function AgentPipelineNode({
+  icon: Icon,
+  label,
+  description,
+  state,
+  index,
+}: {
+  icon: React.ElementType;
+  label: string;
+  description: string;
+  state: "idle" | "processing" | "done" | "skipped";
+  index: number;
+}) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, x: -12 }}
+      animate={{ opacity: 1, x: 0 }}
+      transition={{ delay: index * 0.08, ease: "easeOut" }}
+      className={`relative mb-3 flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all duration-500 ${
+        state === "processing"
+          ? "border-cyan-500/40 bg-cyan-500/10 shadow-[0_0_15px_-3px_rgba(6,182,212,0.3)]"
+          : state === "done"
+            ? "border-emerald-500/30 bg-emerald-500/5"
+            : state === "skipped"
+              ? "border-border/30 opacity-30"
+              : "border-border opacity-40"
+      }`}
+    >
+      {state === "processing" && (
+        <motion.div
+          className="absolute inset-0 rounded-lg border border-cyan-400/20"
+          animate={{
+            boxShadow: [
+              "0 0 0px rgba(6,182,212,0)",
+              "0 0 12px rgba(6,182,212,0.15)",
+              "0 0 0px rgba(6,182,212,0)",
+            ],
+          }}
+          transition={{ duration: 2, repeat: Infinity }}
+        />
+      )}
+      <div
+        className={`relative flex h-9 w-9 items-center justify-center rounded-full transition-all duration-500 ${
+          state === "processing"
+            ? "bg-cyan-500/20"
+            : state === "done"
+              ? "bg-emerald-500/20"
+              : "bg-secondary"
+        }`}
+      >
+        {state === "processing" && (
+          <motion.div
+            className="absolute inset-0 rounded-full border border-cyan-400/40"
+            animate={{ scale: [1, 1.3, 1], opacity: [0.6, 0, 0.6] }}
+            transition={{ duration: 1.5, repeat: Infinity }}
+          />
+        )}
+        <Icon
+          className={`h-4 w-4 transition-colors duration-300 ${
+            state === "processing"
+              ? "text-cyan-400"
+              : state === "done"
+                ? "text-emerald-400"
+                : "text-muted-foreground"
+          }`}
+        />
+      </div>
+      <div className="flex-1">
+        <p
+          className={`text-sm font-medium capitalize transition-colors duration-300 ${
+            state === "processing"
+              ? "text-cyan-300"
+              : state === "done"
+                ? "text-emerald-300"
+                : "text-muted-foreground"
+          }`}
+        >
+          {label}
+        </p>
+        <p className="text-[10px] text-muted-foreground">
+          {state === "processing" ? (
+            <motion.span
+              animate={{ opacity: [1, 0.4, 1] }}
+              transition={{ duration: 1.5, repeat: Infinity }}
+            >
+              {description}...
+            </motion.span>
+          ) : state === "done" ? (
+            "Complete"
+          ) : (
+            description
+          )}
+        </p>
+      </div>
+      {state === "done" && (
+        <motion.div
+          initial={{ scale: 0 }}
+          animate={{ scale: 1 }}
+          transition={{ type: "spring", stiffness: 300, damping: 15 }}
+        >
+          <CheckCircle2 className="h-3.5 w-3.5 text-emerald-400" />
+        </motion.div>
+      )}
+      {state === "processing" && (
+        <motion.div
+          animate={{ rotate: 360 }}
+          transition={{ duration: 1.5, repeat: Infinity, ease: "linear" }}
+        >
+          <Radio className="h-3 w-3 text-cyan-400" />
+        </motion.div>
+      )}
+    </motion.div>
+  );
+}
+
+function TypingDots() {
+  return (
+    <motion.div className="flex items-center gap-1.5 py-2">
+      {[0, 1, 2].map((i) => (
+        <motion.div
+          key={i}
+          className="h-1.5 w-1.5 rounded-full bg-cyan-400"
+          animate={{ y: [0, -4, 0], opacity: [0.4, 1, 0.4] }}
+          transition={{
+            duration: 1,
+            repeat: Infinity,
+            delay: i * 0.15,
+            ease: "easeInOut",
+          }}
+        />
+      ))}
+    </motion.div>
+  );
+}
 
 export function ChatInterface() {
   const [assets, setAssets] = useState<Asset[]>([]);
@@ -51,7 +206,10 @@ export function ChatInterface() {
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [lastDecision, setLastDecision] = useState<AgentDecision | null>(null);
+  const [activeAgent, setActiveAgent] = useState<string | null>(null);
+  const [agentStates, setAgentStates] = useState<Record<string, "idle" | "processing" | "done" | "skipped">>({});
   const bottomRef = useRef<HTMLDivElement>(null);
+  const loadingRef = useRef(false);
 
   useEffect(() => {
     fetch("/api/assets").then((r) => r.json()).then((d) => setAssets(d.assets));
@@ -59,13 +217,36 @@ export function ChatInterface() {
 
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+  }, [messages, activeAgent]);
+
+  const simulateAgents = useCallback(async (invoked: string[]) => {
+    const states: Record<string, "idle" | "processing" | "done" | "skipped"> = {};
+    AGENT_ORDER.forEach((a) => {
+      states[a] = invoked.includes(a) ? "idle" : "skipped";
+    });
+    setAgentStates({ ...states });
+
+    for (const agent of AGENT_ORDER) {
+      if (!invoked.includes(agent)) continue;
+      states[agent] = "processing";
+      setActiveAgent(agent);
+      setAgentStates({ ...states });
+
+      const delay = agent === "webSearch" ? 1800 : agent === "decision" ? 1200 : 600;
+      await new Promise((r) => setTimeout(r, delay));
+
+      states[agent] = "done";
+      setAgentStates({ ...states });
+    }
+    setActiveAgent(null);
+  }, []);
 
   const msgIdRef = useRef(0);
   async function sendMessage(query: string) {
-    if (!query.trim() || loading) return;
+    if (!query.trim() || loading || loadingRef.current) return;
     setInput("");
     setLoading(true);
+    loadingRef.current = true;
 
     msgIdRef.current += 1;
     const userMsg: CopilotMessage = {
@@ -80,6 +261,9 @@ export function ChatInterface() {
     };
     setMessages((prev) => [...prev, userMsg]);
 
+    setLastDecision(null);
+    setActiveAgent("planner");
+
     try {
       const res = await fetch("/api/copilot", {
         method: "POST",
@@ -91,6 +275,10 @@ export function ChatInterface() {
         }),
       });
       const data = await res.json();
+
+      const invoked = data.decision?.agentsInvoked ?? ["planner", "decision"];
+      simulateAgents(invoked);
+
       setConversationId(data.conversation.id);
       setMessages((prev) => [
         ...prev.filter((m) => m.id !== userMsg.id),
@@ -99,6 +287,7 @@ export function ChatInterface() {
       ]);
       setLastDecision(data.decision);
     } catch {
+      setActiveAgent(null);
       setMessages((prev) => [
         ...prev,
         {
@@ -114,13 +303,14 @@ export function ChatInterface() {
       ]);
     } finally {
       setLoading(false);
+      loadingRef.current = false;
     }
   }
 
   return (
     <div className="flex h-[calc(100vh)] flex-col">
       <PageHeader
-        badge="AI Engineer · Chat + Diagnostics"
+        badge="AI Engineer · Multi-Agent System"
         title="AI Copilot"
         subtitle="Chat · Diagnostics · Web Search · Predictions · Solutions"
         actions={
@@ -140,49 +330,77 @@ export function ChatInterface() {
       />
 
       <div className="flex flex-1 overflow-hidden">
-        {/* Chat area */}
         <div className="flex flex-1 flex-col">
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {messages.length === 0 && (
-              <div className="flex flex-col items-center justify-center py-16 text-center">
-                <MessageCircle className="mb-4 h-10 w-10 text-accent" />
-                <h3 className="text-lg font-semibold text-foreground">MAN OF STEEL AI Copilot</h3>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex flex-col items-center justify-center py-16 text-center"
+              >
+                <motion.div
+                  animate={{
+                    boxShadow: [
+                      "0 0 20px rgba(6,182,212,0.1)",
+                      "0 0 40px rgba(6,182,212,0.2)",
+                      "0 0 20px rgba(6,182,212,0.1)",
+                    ],
+                  }}
+                  transition={{ duration: 3, repeat: Infinity }}
+                  className="mb-4 flex h-14 w-14 items-center justify-center rounded-xl bg-cyan-500/10"
+                >
+                  <Zap className="h-7 w-7 text-cyan-400" />
+                </motion.div>
+                <h3 className="text-lg font-semibold text-foreground">
+                  MAN OF STEEL AI Copilot
+                </h3>
                 <p className="mt-2 max-w-md text-sm text-muted-foreground">
-                  Hey there! I'm your maintenance AI — part engineer, part technician. I can help with
-                  diagnostics, predictions, web research, or just chat about industrial tech.
+                  Multi-agent maintenance intelligence. Diagnostics, predictions,
+                  knowledge retrieval, and web research ▸ all in one conversation.
                 </p>
                 <div className="mt-6 grid max-w-2xl gap-2">
-                  {SUGGESTED_QUERIES.map((q) => (
+                  {SUGGESTED_QUERIES.map((q, i) => (
                     <motion.button
                       key={q}
+                      initial={{ opacity: 0, x: -10 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: i * 0.08 }}
                       whileHover={{ scale: 1.01, x: 4 }}
                       whileTap={{ scale: 0.98 }}
                       onClick={() => sendMessage(q)}
-                      className="rounded-lg border border-border px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:border-accent/30 hover:bg-accent/5 hover:text-foreground"
+                      className="rounded-lg border border-border px-4 py-2.5 text-left text-sm text-muted-foreground transition-colors hover:border-cyan-500/30 hover:bg-cyan-500/5 hover:text-foreground"
                     >
                       {q}
                     </motion.button>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
 
-            <AnimatePresence>
+            <AnimatePresence mode="popLayout">
               {messages.map((msg) => (
                 <motion.div
                   key={msg.id}
-                  initial={{ opacity: 0, y: 8 }}
-                  animate={{ opacity: 1, y: 0 }}
+                  layout
+                  initial={{ opacity: 0, y: 12, scale: 0.98 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  transition={{ type: "spring", stiffness: 200, damping: 20 }}
                   className={`flex gap-3 ${msg.role === "user" ? "justify-end" : ""}`}
                 >
                   {msg.role === "assistant" && (
-                    <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-accent/30 bg-accent/10">
-                      <Bot className="h-4 w-4 text-accent" />
-                    </div>
+                    <motion.div
+                      initial={{ scale: 0 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 300, damping: 15 }}
+                      className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-cyan-500/30 bg-cyan-500/10"
+                    >
+                      <Bot className="h-4 w-4 text-cyan-400" />
+                    </motion.div>
                   )}
                   <div
                     className={`max-w-[75%] rounded-lg px-4 py-3 ${
-                          msg.role === "user"
+                      msg.role === "user"
                         ? "bg-primary/20 border border-primary/20"
                         : "hud-panel"
                     }`}
@@ -208,14 +426,19 @@ export function ChatInterface() {
                       })}
                     </div>
                     {msg.citations && msg.citations.length > 0 && (
-                      <div className="mt-3 border-t border-border/30 pt-2">
+                      <motion.div
+                        initial={{ opacity: 0, height: 0 }}
+                        animate={{ opacity: 1, height: "auto" }}
+                        transition={{ delay: 0.3 }}
+                        className="mt-3 border-t border-border/30 pt-2"
+                      >
                         <p className="text-[10px] uppercase text-muted-foreground">Citations</p>
                         {msg.citations.map((c, i) => (
                           <p key={i} className="text-xs text-cyan-400/70">
                             [{i + 1}] {c.document_title} ({(c.similarity * 100).toFixed(0)}%)
                           </p>
                         ))}
-                      </div>
+                      </motion.div>
                     )}
                   </div>
                   {msg.role === "user" && (
@@ -228,22 +451,46 @@ export function ChatInterface() {
             </AnimatePresence>
 
             {loading && (
-              <div className="flex items-center gap-2 text-sm text-cyan-400">
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Thinking... {lastDecision?.agentsInvoked?.includes("webSearch") ? "(searching web)" : ""}
-              </div>
+              <motion.div
+                initial={{ opacity: 0, y: 8 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-start gap-3"
+              >
+                <motion.div
+                  animate={{ scale: [1, 1.1, 1] }}
+                  transition={{ duration: 2, repeat: Infinity }}
+                  className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg border border-cyan-500/30 bg-cyan-500/10"
+                >
+                  <Bot className="h-4 w-4 text-cyan-400" />
+                </motion.div>
+                <div className="rounded-lg border border-cyan-500/20 bg-cyan-500/5 px-4 py-3">
+                  <div className="flex items-center gap-2 text-sm text-cyan-400 mb-1">
+                    {activeAgent ? (
+                      <>
+                        <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                        <span className="capitalize">{AGENT_LABELS[activeAgent] ?? activeAgent} agent working</span>
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="h-3.5 w-3.5" />
+                        <span>Processing your request</span>
+                      </>
+                    )}
+                  </div>
+                  <TypingDots />
+                </div>
+              </motion.div>
             )}
             <div ref={bottomRef} />
           </div>
 
-          {/* Input */}
           <div className="border-t border-border/60 p-4">
             <div className="flex gap-2">
               <input
                 value={input}
                 onChange={(e) => setInput(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && sendMessage(input)}
-                placeholder="Ask me anything — diagnostics, web search, or just chat..."
+                placeholder="Ask me anything ▸ diagnostics, web search, or just chat..."
                 className="flex-1 rounded-lg border border-border bg-secondary/50 px-4 py-2.5 text-sm focus:border-cyan-500/50 focus:outline-none"
                 disabled={loading}
               />
@@ -258,63 +505,57 @@ export function ChatInterface() {
           </div>
         </div>
 
-        {/* Agent panel */}
+        {/* Agent Pipeline Panel */}
         <div className="w-80 shrink-0 border-l border-border p-4 space-y-4 overflow-y-auto">
-          {/* Agent Pipeline Visualization */}
           <div>
-            <p className="mb-3 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-              Agent Pipeline
-            </p>
+            <div className="mb-3 flex items-center justify-between">
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Agent Pipeline
+              </p>
+              {loading && (
+                <motion.div
+                  animate={{ opacity: [0.3, 1, 0.3] }}
+                  transition={{ duration: 1.5, repeat: Infinity }}
+                  className="text-[10px] text-cyan-400"
+                >
+                  Processing...
+                </motion.div>
+              )}
+            </div>
             <div className="relative">
-              {/* Pipeline flow line */}
               <div className="absolute left-[19px] top-2 bottom-2 w-px bg-border" />
-              {["planner", "knowledge", "prediction", "webSearch", "decision"].map((agent, idx) => {
+              {AGENT_ORDER.map((agent, idx) => {
                 const Icon = AGENT_ICONS[agent];
-                const invoked = lastDecision?.agentsInvoked?.includes(agent);
+                const state = loading
+                  ? agentStates[agent] ?? "idle"
+                  : (lastDecision?.agentsInvoked?.includes(agent))
+                    ? "done"
+                    : "skipped";
                 return (
-                  <motion.div
+                  <AgentPipelineNode
                     key={agent}
-                    initial={{ opacity: 0, x: -10 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: idx * 0.1 }}
-                    className={`relative mb-3 flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-colors ${
-                      invoked
-                        ? "border-accent/20 bg-accent/5"
-                        : "border-border opacity-40"
-                    }`}
-                  >
-                    <div className={`flex h-9 w-9 items-center justify-center rounded-full ${
-                      invoked ? "bg-accent/20" : "bg-secondary"
-                    }`}>
-                      <Icon className={`h-4 w-4 ${invoked ? "text-accent" : "text-muted-foreground"}`} />
-                    </div>
-                    <div className="flex-1">
-                      <p className="text-sm font-medium capitalize">{agent === "webSearch" ? "Web Search" : agent}</p>
-                      <p className="text-[10px] text-muted-foreground">
-                        {agent === "planner" && "Intent detection"}
-                        {agent === "knowledge" && "Document retrieval"}
-                        {agent === "prediction" && "Failure analysis"}
-                        {agent === "webSearch" && "Web research"}
-                        {agent === "decision" && "Response generation"}
-                      </p>
-                    </div>
-                    {invoked && (
-                      <CheckCircle2 className="h-3.5 w-3.5 text-success" />
-                    )}
-                  </motion.div>
+                    icon={Icon}
+                    label={AGENT_LABELS[agent]}
+                    description={AGENT_DESCRIPTIONS[agent]}
+                    state={state}
+                    index={idx}
+                  />
                 );
               })}
             </div>
           </div>
 
-          {/* Agent Reasoning Panel */}
-          {lastDecision && (
-            <div className="space-y-3">
+          {lastDecision && !loading && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+              className="space-y-3"
+            >
               <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
                 Decision Summary
               </p>
 
-              {/* Confidence bar */}
               {lastDecision.prediction && (
                 <div className="rounded-lg border border-border bg-card px-4 py-3">
                   <div className="flex items-center justify-between mb-1.5">
@@ -327,14 +568,13 @@ export function ChatInterface() {
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${lastDecision.prediction.confidence * 100}%` }}
-                      transition={{ duration: 1, ease: "easeOut" }}
-                      className="h-full rounded-full bg-accent"
+                      transition={{ duration: 1.2, ease: "easeOut" }}
+                      className="h-full rounded-full bg-gradient-to-r from-cyan-500 to-emerald-400"
                     />
                   </div>
                 </div>
               )}
 
-              {/* Risk Level */}
               <div className="rounded-lg border border-border bg-card px-4 py-3">
                 <div className="flex items-center justify-between">
                   <p className="text-[10px] text-muted-foreground">Risk Level</p>
@@ -342,23 +582,26 @@ export function ChatInterface() {
                 </div>
               </div>
 
-              {/* Failure Probability */}
               {lastDecision.prediction && (
                 <div className="rounded-lg border border-border bg-card px-4 py-3">
                   <div className="flex items-center justify-between">
                     <p className="text-[10px] text-muted-foreground">Failure Probability</p>
-                    <p className={`text-sm font-bold ${
-                      lastDecision.prediction.failureProbability > 0.75 ? "text-destructive"
-                      : lastDecision.prediction.failureProbability > 0.5 ? "text-warning"
-                      : "text-accent"
-                    }`}>
+                    <motion.p
+                      initial={{ scale: 0.5 }}
+                      animate={{ scale: 1 }}
+                      transition={{ type: "spring", stiffness: 200, delay: 0.4 }}
+                      className={`text-sm font-bold ${
+                        lastDecision.prediction.failureProbability > 0.75 ? "text-destructive"
+                        : lastDecision.prediction.failureProbability > 0.5 ? "text-warning"
+                        : "text-accent"
+                      }`}
+                    >
                       {formatPercent(lastDecision.prediction.failureProbability)}
-                    </p>
+                    </motion.p>
                   </div>
                 </div>
               )}
 
-              {/* Root Cause */}
               <div className="rounded-lg border border-border bg-card px-4 py-3">
                 <p className="text-[10px] text-muted-foreground mb-1">Root Cause</p>
                 <p className="text-xs text-foreground leading-relaxed">
@@ -366,27 +609,40 @@ export function ChatInterface() {
                 </p>
               </div>
 
-              {/* Business Impact */}
               <div className="rounded-lg border border-border bg-card px-4 py-3">
                 <p className="text-[10px] text-muted-foreground mb-1">Business Impact</p>
                 <p className="text-xs text-warning/80">{lastDecision.businessImpact}</p>
               </div>
 
-              {/* Recommended Actions */}
               {lastDecision.recommendedActions && lastDecision.recommendedActions.length > 0 && (
                 <div className="rounded-lg border border-border bg-card px-4 py-3">
                   <p className="text-[10px] text-muted-foreground mb-1.5">Recommended Actions</p>
                   <div className="space-y-1.5">
                     {lastDecision.recommendedActions.slice(0, 3).map((action, i) => (
-                      <div key={i} className="flex items-start gap-2">
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -8 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: 0.5 + i * 0.1 }}
+                        className="flex items-start gap-2"
+                      >
                         <ChevronRight className="h-3 w-3 text-accent mt-0.5 shrink-0" />
                         <p className="text-xs text-foreground">{action}</p>
-                      </div>
+                      </motion.div>
                     ))}
                   </div>
                 </div>
               )}
-            </div>
+
+              {lastDecision.durationMs && (
+                <div className="rounded-lg border border-border/50 bg-card/50 px-4 py-2">
+                  <div className="flex items-center justify-between text-[10px] text-muted-foreground">
+                    <span>Response time</span>
+                    <span className="text-cyan-400/70">{lastDecision.durationMs}ms</span>
+                  </div>
+                </div>
+              )}
+            </motion.div>
           )}
         </div>
       </div>

@@ -96,30 +96,30 @@ const PLANT_BOTTLENECK_SCENARIOS = [
   { type: "Production bottleneck", severity: "critical" as AlertSeverity, desc: "Blast Furnace Fan A degradation limiting furnace throughput to 78% capacity", impact: "$380K/day production loss", downtime: 48, cost: 18500000 },
   { type: "Material handling constraint", severity: "warning" as AlertSeverity, desc: "Scrap Conveyor C2 maintenance causing scrap feed delay to BOF", impact: "18hr batch delay impact", downtime: 18, cost: 3200000 },
   { type: "Cooling constraint", severity: "warning" as AlertSeverity, desc: "Cooling Water Pump WP-2 degraded capacity risking mill cooling", impact: "Forced production rate reduction 15%", downtime: 24, cost: 4800000 },
-  { type: "Draft group limitation", severity: "critical" as AlertSeverity, desc: "ID Fan IF-1 critical — furnace draft limited, reducing melt rate", impact: "Melt rate reduced by 22%", downtime: 72, cost: 14200000 },
+  { type: "Draft group limitation", severity: "critical" as AlertSeverity, desc: "ID Fan IF-1 critical ▸ furnace draft limited, reducing melt rate", impact: "Melt rate reduced by 22%", downtime: 72, cost: 14200000 },
 ];
 
 const SPARE_SHORTAGE_SCENARIOS = [
   { part: "Spherical roller bearing 22328", asset: "BR-4401", stock: 0, reorder: 3, lead: 14, priority: "p1_critical" as PriorityLevel, impact: "Cannot perform bearing replacement on Drive Motor Assembly" },
   { part: "Hydraulic seal kit HP-4421", asset: "HP-4421", stock: 1, reorder: 3, lead: 21, priority: "p2_high" as PriorityLevel, impact: "Only 1 seal kit available for 3 pumps in service" },
-  { part: "Fan impeller ARF 2000", asset: "IF-9101", stock: 0, reorder: 1, lead: 60, priority: "p1_critical" as PriorityLevel, impact: "Lead time 60 days — no spare impeller for ID Fan IF-1" },
-  { part: "Cooling fan filter set", asset: "RM-2847", stock: 0, reorder: 5, lead: 7, priority: "p3_medium" as PriorityLevel, impact: "No filters in stock — rolling mill motor cooling at risk" },
-  { part: "V-belt set SPC-5000", asset: "CV-7710", stock: 2, reorder: 4, lead: 3, priority: "p3_medium" as PriorityLevel, impact: "Below reorder point — 2 remaining" },
+  { part: "Fan impeller ARF 2000", asset: "IF-9101", stock: 0, reorder: 1, lead: 60, priority: "p1_critical" as PriorityLevel, impact: "Lead time 60 days ▸ no spare impeller for ID Fan IF-1" },
+  { part: "Cooling fan filter set", asset: "RM-2847", stock: 0, reorder: 5, lead: 7, priority: "p3_medium" as PriorityLevel, impact: "No filters in stock ▸ rolling mill motor cooling at risk" },
+  { part: "V-belt set SPC-5000", asset: "CV-7710", stock: 2, reorder: 4, lead: 3, priority: "p3_medium" as PriorityLevel, impact: "Below reorder point ▸ 2 remaining" },
 ];
 
 const EXPERIENCE_NODE_SCENARIOS = [
-  { incidentType: "Bearings degradation — grease contamination", symptoms: ["Elevated vibration 4.5mm/s", "Temperature rise 10C", "High-frequency noise"], rootCause: "Scale dust ingress through failed seal", fix: "Replaced bearing 22328, installed labyrinth seal", effective: true, parts: ["Bearing 22328", "Labyrinth seal kit", "EP2 grease"], downtime: 8, cost: 18500, recurring: true, confidence: 0.12 },
+  { incidentType: "Bearings degradation ▸ grease contamination", symptoms: ["Elevated vibration 4.5mm/s", "Temperature rise 10C", "High-frequency noise"], rootCause: "Scale dust ingress through failed seal", fix: "Replaced bearing 22328, installed labyrinth seal", effective: true, parts: ["Bearing 22328", "Labyrinth seal kit", "EP2 grease"], downtime: 8, cost: 18500, recurring: true, confidence: 0.12 },
   { incidentType: "Hydraulic pump seal failure", symptoms: ["Pressure fluctuation +/-3bar", "Oil leakage 5L/day", "Pump cycling 2x normal"], rootCause: "O-ring thermal degradation in manifold", fix: "Replaced all manifold O-rings, pressure tested", effective: true, parts: ["O-ring kit NBR-70", "Hydraulic oil 20L"], downtime: 4, cost: 3200, recurring: true, confidence: 0.08 },
   { incidentType: "Fan rotor imbalance after rebuild", symptoms: ["1X RPM vibration 8mm/s", "Bearing housing hot 88C", "Seal rub marks visible"], rootCause: "Erosion wear uneven on blade trailing edges", fix: "In-situ dynamic balancing, blade profile restored", effective: true, parts: ["Balance weights", "Ceramic coating"], downtime: 12, cost: 28000, recurring: false, confidence: 0.15 },
   { incidentType: "Motor winding insulation failure", symptoms: ["Ground fault relay tripped", "Insulation resistance 0.5MΩ", "Burning smell from windings"], rootCause: "Moisture ingress through conduit seal", fix: "Rewound stator, installed heater bands, resealed conduit", effective: true, parts: ["Stator winding kit", "Heater band set", "Conduit seal"], downtime: 72, cost: 95000, recurring: false, confidence: 0.2 },
-  { incidentType: "Gearbox tooth fracture — overload", symptoms: ["Gear mesh frequency vibration spiking", "Metal chunks in oil filter", "Loud knocking from gearbox"], rootCause: "Torque spike from mill cobble event", fix: "Replaced gearbox assembly, upgraded coupling torque limiter", effective: true, parts: ["Gearbox H2SH 450", "Torque limiter"], downtime: 36, cost: 145000, recurring: true, confidence: 0.18 },
+  { incidentType: "Gearbox tooth fracture ▸ overload", symptoms: ["Gear mesh frequency vibration spiking", "Metal chunks in oil filter", "Loud knocking from gearbox"], rootCause: "Torque spike from mill cobble event", fix: "Replaced gearbox assembly, upgraded coupling torque limiter", effective: true, parts: ["Gearbox H2SH 450", "Torque limiter"], downtime: 36, cost: 145000, recurring: true, confidence: 0.18 },
   { incidentType: "Pump cavitation damage", symptoms: ["Erratic discharge pressure", "Gravel noise from volute", "Impeller pitting found"], rootCause: "Suction strainer 60% blocked + low sump level", fix: "Cleaned strainer, replaced impeller, installed level control", effective: true, parts: ["Impeller 250mm", "Level transmitter"], downtime: 6, cost: 8500, recurring: true, confidence: 0.1 },
 ];
 
 const FEEDBACK_SCENARIOS = [
   { query: "Elevated vibration on Blast Furnace Fan A", diagnosis: "Bearing wear from contamination", prediction: { failureProbability: 0.82, mode: "DE bearing failure" }, recommendation: "Replace bearing within 48 hours", outcome: "Bearing replaced, contamination found in grease", rootCauseApproved: "Grease contamination with scale dust", resolution: "Replaced bearing, installed labyrinth seal, switched to EP2 grease", feedback: "correct" as EngineerFeedback },
   { query: "Hydraulic Pump H1 pressure instability", diagnosis: "Seal degradation", prediction: { failureProbability: 0.65, mode: "Mechanical seal degradation" }, recommendation: "Schedule seal replacement", outcome: "Found O-ring degradation in manifold, not seal", rootCauseApproved: "O-ring thermal degradation", resolution: "Replaced all manifold O-rings, pressure test passed", feedback: "partially_correct" as EngineerFeedback },
-  { query: "Conveyor C2 motor overheating", diagnosis: "Motor winding fault", prediction: { failureProbability: 0.55, mode: "Stator winding short" }, recommendation: "Megger test and inspection", outcome: "Cooling fan blockage — no winding fault", rootCauseApproved: "Cooling air duct blockage", resolution: "Cleaned cooling ducts, replaced filter, motor running cool", feedback: "incorrect" as EngineerFeedback },
+  { query: "Conveyor C2 motor overheating", diagnosis: "Motor winding fault", prediction: { failureProbability: 0.55, mode: "Stator winding short" }, recommendation: "Megger test and inspection", outcome: "Cooling fan blockage ▸ no winding fault", rootCauseApproved: "Cooling air duct blockage", resolution: "Cleaned cooling ducts, replaced filter, motor running cool", feedback: "incorrect" as EngineerFeedback },
   { query: "ID Fan IF-1 vibration increasing", diagnosis: "Rotor imbalance from erosion", prediction: { failureProbability: 0.78, mode: "Fan blade erosion" }, recommendation: "In-situ dynamic balancing", outcome: "Confirmed blade erosion, balanced successfully", rootCauseApproved: "Erosion wear on blade trailing edges", resolution: "Balanced rotor, applied ceramic coating on blades", feedback: "correct" as EngineerFeedback },
   { query: "Rolling Mill RM-2848 gear noise", diagnosis: "Gear tooth wear", prediction: { failureProbability: 0.7, mode: "Gear fatigue spalling" }, recommendation: "Oil analysis and borescope inspection", outcome: "Lubrication contamination, not gear wear", rootCauseApproved: "Oil contamination with water and debris", resolution: "Oil flush, new filters, seal replacement on gearbox", feedback: "partially_correct" as EngineerFeedback },
 ];
@@ -146,7 +146,7 @@ export function generatePlant(): Plant {
   return {
     id: "plant-arc-msw-001",
     name: "Tata Steel Integrated Plant",
-    location: "Pittsburgh, PA — Zone 7",
+    location: "Jamshedpur, Jharkhand ▸ India",
     capacity: "4.2M tons/year",
     health_score: 74.2,
     created_at: now,
@@ -313,7 +313,7 @@ export function generateMaintenanceRecords(assets: Asset[]): MaintenanceRecord[]
   const titles: Record<string, string[]> = {
     rolling_mill: ["Bearing lubrication service", "Roll grinding & profile check", "Gearbox oil analysis", "Emergency spindle replacement"],
     blast_furnace_fan: ["Fan bearing replacement", "Rotor dynamic balancing", "Vibration analysis & alignment", "Emergency motor rewind"],
-    hydraulic_pump: ["Seal replacement — hydraulic circuit", "Oil flush & filter change", "Pressure relief valve calibration", "Emergency pump rebuild"],
+    hydraulic_pump: ["Seal replacement ▸ hydraulic circuit", "Oil flush & filter change", "Pressure relief valve calibration", "Emergency pump rebuild"],
     conveyor: ["Belt tracking adjustment", "Idler roller replacement", "Drive pulley lagging check", "Emergency belt splice repair"],
     overhead_crane: ["Hoist brake adjustment", "Wire rope inspection & lubricate", "Trolley wheel replacement", "Emergency load cell replacement"],
     gearbox: ["Oil sample & analysis", "Bearing clearance check", "Seal replacement", "Gear tooth inspection"],
@@ -407,10 +407,10 @@ export function generateMaintenancePriorities(assets: Asset[]): MaintenancePrior
       "Next scheduled shutdown";
 
     const procurementRecommendation =
-      priorityLevel === "p1_critical" ? "EMERGENCY ORDER — Express shipping required" :
-      priorityLevel === "p2_high" ? "PRIORITY ORDER — Initiate procurement within 48 hours" :
-      priorityLevel === "p3_medium" ? "SCHEDULE ORDER — Include in next quarterly procurement" :
-      "ROUTINE ORDER — Stock replenishment at standard lead time";
+      priorityLevel === "p1_critical" ? "EMERGENCY ORDER ▸ Express shipping required" :
+      priorityLevel === "p2_high" ? "PRIORITY ORDER ▸ Initiate procurement within 48 hours" :
+      priorityLevel === "p3_medium" ? "SCHEDULE ORDER ▸ Include in next quarterly procurement" :
+      "ROUTINE ORDER ▸ Stock replenishment at standard lead time";
 
     const impactSummaries: Record<PriorityLevel, string> = {
       p1_critical: `CATASTROPHIC: ${asset.name} failure within ${Math.round(rul / 24)} days would cause plant-wide production loss. Estimated impact: $${(productionImpact * 5.2 * 1_000_000).toFixed(0)}M. No spare available, ${baseline?.procurementLeadDays ?? 60}-day procurement lead time.`,
@@ -454,7 +454,7 @@ export function generateFeedbackEntries(assets: Asset[]): MaintenanceFeedback[] 
       root_cause: scenario.rootCauseApproved,
       resolution: scenario.resolution,
       engineer_feedback: scenario.feedback,
-      resolution_notes: `Engineer confirmed findings. ${scenario.feedback === "correct" ? "Model prediction accurate." : scenario.feedback === "partially_correct" ? "Root cause differed from prediction — model retrained." : "Incorrect diagnosis — case logged for model improvement."}`,
+      resolution_notes: `Engineer confirmed findings. ${scenario.feedback === "correct" ? "Model prediction accurate." : scenario.feedback === "partially_correct" ? "Root cause differed from prediction ▸ model retrained." : "Incorrect diagnosis ▸ case logged for model improvement."}`,
       timestamp: subDays(new Date(), 15 - i * 2).toISOString(),
       created_at: subDays(new Date(), 15 - i * 2).toISOString(),
     };
@@ -729,18 +729,18 @@ export function generateInsights(plantId: string, assets: Asset[]): AIInsight[] 
 
 function getFailureMode(type: MachineType): string {
   const modes: Record<string, string> = {
-    rolling_mill: "Roll bearing fatigue — spalling on outer race",
-    blast_furnace_fan: "Drive-end bearing failure — grease starvation",
-    hydraulic_pump: "Mechanical seal degradation — lip wear",
-    conveyor: "Drive motor bearing wear — contamination ingress",
-    overhead_crane: "Hoist gearbox wear — tooth surface fatigue",
-    gearbox: "Gear tooth pitting — lubrication film breakdown",
-    compressor: "Screw rotor contact — oil system failure",
-    cooling_water_pump: "Impeller cavitation damage — NPSH violation",
-    id_fan: "Rotor imbalance — blade erosion",
-    fd_fan: "Bearing wear — misalignment induced",
-    bearing: "Raceway spalling — fatigue life exceeded",
-    drive_system: "IGBT module failure — thermal cycling",
+    rolling_mill: "Roll bearing fatigue ▸ spalling on outer race",
+    blast_furnace_fan: "Drive-end bearing failure ▸ grease starvation",
+    hydraulic_pump: "Mechanical seal degradation ▸ lip wear",
+    conveyor: "Drive motor bearing wear ▸ contamination ingress",
+    overhead_crane: "Hoist gearbox wear ▸ tooth surface fatigue",
+    gearbox: "Gear tooth pitting ▸ lubrication film breakdown",
+    compressor: "Screw rotor contact ▸ oil system failure",
+    cooling_water_pump: "Impeller cavitation damage ▸ NPSH violation",
+    id_fan: "Rotor imbalance ▸ blade erosion",
+    fd_fan: "Bearing wear ▸ misalignment induced",
+    bearing: "Raceway spalling ▸ fatigue life exceeded",
+    drive_system: "IGBT module failure ▸ thermal cycling",
   };
   return modes[type] ?? "Unknown failure mode";
 }

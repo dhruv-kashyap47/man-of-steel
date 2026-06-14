@@ -18,6 +18,7 @@ import {
   generatePlantHealthRanking,
 } from "./generators";
 import { KNOWLEDGE_DOCUMENTS } from "./knowledge-content";
+import { embedTextLocal } from "@/lib/rag/embeddings";
 import type {
   Plant,
   Asset,
@@ -105,7 +106,7 @@ function init() {
       document_id: doc.id,
       chunk_index: i,
       content,
-      embedding: null,
+      embedding: embedTextLocal(content),
       token_count: Math.ceil(content.length / 4),
       metadata: { title: doc.title },
       created_at: now,
@@ -188,7 +189,7 @@ export const dataStore = {
         document_id: newDoc.id,
         chunk_index: i,
         content,
-        embedding: null,
+        embedding: embedTextLocal(content),
         token_count: Math.ceil(content.length / 4),
         metadata: { title: doc.title },
         created_at: now,

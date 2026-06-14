@@ -96,7 +96,7 @@ export function MaintenancePriorityDashboard() {
                 <AlertTriangle className="h-6 w-6 text-destructive" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">P1 — Critical</p>
+                <p className="text-sm text-muted-foreground">P1 ▸ Critical</p>
                 <p className="text-2xl font-bold text-destructive">{p1Count}</p>
               </div>
             </CardContent>
@@ -107,7 +107,7 @@ export function MaintenancePriorityDashboard() {
                 <Shield className="h-6 w-6 text-warning" />
               </div>
               <div>
-                <p className="text-sm text-muted-foreground">P2 — High</p>
+                <p className="text-sm text-muted-foreground">P2 ▸ High</p>
                 <p className="text-2xl font-bold text-warning">{p2Count}</p>
               </div>
             </CardContent>
@@ -278,7 +278,7 @@ export function MaintenancePriorityDashboard() {
                     )} />
                     <div>
                       <p className="text-xs font-medium text-foreground">
-                        {p.maintenanceWindow} — {p.assetName}
+                        {p.maintenanceWindow} ▸ {p.assetName}
                       </p>
                       <p className="text-[10px] text-muted-foreground">
                         {p.procurementRecommendation.slice(0, 60)}...

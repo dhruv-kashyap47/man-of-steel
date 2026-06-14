@@ -268,7 +268,7 @@ function AssetExplorerContent() {
             {/* Charts */}
             <Card>
               <CardHeader>
-                <CardTitle>Sensor Trends — 72 Hours</CardTitle>
+                <CardTitle>Sensor Trends ▸ 72 Hours</CardTitle>
               </CardHeader>
               <CardContent>
                 <SensorChart

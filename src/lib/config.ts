@@ -3,7 +3,7 @@ export const APP_CONFIG = {
   tagline: "Integrated Plant Monitoring & Predictive Intelligence",
   version: "2.0.0",
   plantName: "Tata Steel Integrated Plant",
-  plantLocation: "Pittsburgh, PA — Zone 7",
+  plantLocation: "Jamshedpur, Jharkhand ▸ India",
 } as const;
 
 export const ML_CONFIG = {
