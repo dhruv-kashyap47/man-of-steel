@@ -40,25 +40,47 @@ import type {
   SpareShortage,
 } from "@/types/database";
 
-let initialized = false;
-let plant: Plant;
-let assets: Asset[] = [];
-const sensorReadings: Map<string, SensorReading[]> = new Map();
-let alerts: Alert[] = [];
-let maintenanceRecords: MaintenanceRecord[] = [];
-let predictions: FailurePrediction[] = [];
-let insights: AIInsight[] = [];
-let knowledgeDocs: KnowledgeDocument[] = [];
-let documentChunks: DocumentChunk[] = [];
-const conversations: CopilotConversation[] = [];
-const messages: CopilotMessage[] = [];
-const reports: Report[] = [];
-let priorities: MaintenancePriority[] = [];
-let feedback: MaintenanceFeedback[] = [];
-let experiences: ExperienceNode[] = [];
-let earlyWarnings: EarlyWarning[] = [];
-let bottlenecks: PlantBottleneck[] = [];
-let spareShortages: SpareShortage[] = [];
+const g = globalThis as typeof globalThis & {
+  __init?: boolean;
+  __plant?: Plant;
+  __assets?: Asset[];
+  __sensorReadings?: Map<string, SensorReading[]>;
+  __alerts?: Alert[];
+  __maintenanceRecords?: MaintenanceRecord[];
+  __predictions?: FailurePrediction[];
+  __insights?: AIInsight[];
+  __knowledgeDocs?: KnowledgeDocument[];
+  __documentChunks?: DocumentChunk[];
+  __conversations?: CopilotConversation[];
+  __messages?: CopilotMessage[];
+  __reports?: Report[];
+  __priorities?: MaintenancePriority[];
+  __feedback?: MaintenanceFeedback[];
+  __experiences?: ExperienceNode[];
+  __earlyWarnings?: EarlyWarning[];
+  __bottlenecks?: PlantBottleneck[];
+  __spareShortages?: SpareShortage[];
+};
+
+
+let plant: Plant = g.__plant!;
+let assets: Asset[] = g.__assets ?? (g.__assets = []);
+const sensorReadings: Map<string, SensorReading[]> = g.__sensorReadings ?? (g.__sensorReadings = new Map());
+let alerts: Alert[] = g.__alerts ?? (g.__alerts = []);
+let maintenanceRecords: MaintenanceRecord[] = g.__maintenanceRecords ?? (g.__maintenanceRecords = []);
+let predictions: FailurePrediction[] = g.__predictions ?? (g.__predictions = []);
+let insights: AIInsight[] = g.__insights ?? (g.__insights = []);
+let knowledgeDocs: KnowledgeDocument[] = g.__knowledgeDocs ?? (g.__knowledgeDocs = []);
+let documentChunks: DocumentChunk[] = g.__documentChunks ?? (g.__documentChunks = []);
+const conversations: CopilotConversation[] = g.__conversations ?? (g.__conversations = []);
+const messages: CopilotMessage[] = g.__messages ?? (g.__messages = []);
+const reports: Report[] = g.__reports ?? (g.__reports = []);
+let priorities: MaintenancePriority[] = g.__priorities ?? (g.__priorities = []);
+let feedback: MaintenanceFeedback[] = g.__feedback ?? (g.__feedback = []);
+let experiences: ExperienceNode[] = g.__experiences ?? (g.__experiences = []);
+let earlyWarnings: EarlyWarning[] = g.__earlyWarnings ?? (g.__earlyWarnings = []);
+let bottlenecks: PlantBottleneck[] = g.__bottlenecks ?? (g.__bottlenecks = []);
+let spareShortages: SpareShortage[] = g.__spareShortages ?? (g.__spareShortages = []);
 
 function chunkText(text: string, chunkSize = 800, overlap = 100): string[] {
   const chunks: string[] = [];
@@ -71,20 +93,32 @@ function chunkText(text: string, chunkSize = 800, overlap = 100): string[] {
 }
 
 function init() {
-  if (initialized) return;
+  if (g.__init) return;
   plant = generatePlant();
+  g.__plant = plant;
   assets = generateAssets(plant.id);
+  g.__assets = assets;
   assets.forEach((a) => sensorReadings.set(a.id, generateSensorReadings(a)));
   alerts = generateAlerts(assets);
+  g.__alerts = alerts;
   maintenanceRecords = generateMaintenanceRecords(assets);
+  g.__maintenanceRecords = maintenanceRecords;
   predictions = generatePredictions(assets);
+  g.__predictions = predictions;
   insights = generateInsights(plant.id, assets);
+  g.__insights = insights;
   priorities = generateMaintenancePriorities(assets);
+  g.__priorities = priorities;
   feedback = generateFeedbackEntries(assets);
+  g.__feedback = feedback;
   experiences = generateExperienceNodes(assets);
+  g.__experiences = experiences;
   earlyWarnings = generateEarlyWarnings(assets);
+  g.__earlyWarnings = earlyWarnings;
   bottlenecks = generatePlantBottlenecks(assets);
+  g.__bottlenecks = bottlenecks;
   spareShortages = generateSpareShortages();
+  g.__spareShortages = spareShortages;
   const now = new Date().toISOString();
   knowledgeDocs = KNOWLEDGE_DOCUMENTS.map((doc) => ({
     id: uuidv4(),
@@ -100,6 +134,7 @@ function init() {
     created_at: now,
     updated_at: now,
   }));
+  g.__knowledgeDocs = knowledgeDocs;
   documentChunks = knowledgeDocs.flatMap((doc) =>
     chunkText(doc.content).map((content, i) => ({
       id: uuidv4(),
@@ -112,7 +147,8 @@ function init() {
       created_at: now,
     }))
   );
-  initialized = true;
+  g.__documentChunks = documentChunks;
+  g.__init = true;
 }
 
 export const dataStore = {

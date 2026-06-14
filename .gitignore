@@ -51,3 +51,23 @@ next-env.d.ts
 *.pfx
 *.cert
 *.crt
+
+# ppt / hackathon collateral
+*.pptx
+generate_ppt.py
+Man_Of_Steel_Hackathon_Generation_Script.py
+temp_fix.py
+JUDGE_GUIDE.md
+DEPLOY.md
+AGENTS.md
+CLAUDE.md
+
+# design assets (not used in code)
+UI assets/
+
+# unused default next.js svgs
+public/next.svg
+public/vercel.svg
+public/globe.svg
+public/window.svg
+public/file.svg
